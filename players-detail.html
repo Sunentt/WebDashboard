@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>TI 2026 — Детали игроков</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e14; --bg2:#0f141c; --card:#141a24; --card2:#1a2230;
+    --border:rgba(255,255,255,.07);
+    --text:#e8ecf1; --muted:#8892a0;
+    --radiant:#2ecc71; --dire:#e63946;
+    --gold:#f4a261; --blue:#4ea8de; --purple:#9d4edd;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);
+    padding:24px;min-height:100vh;
+    background-image:
+      radial-gradient(circle at 15% 0%,rgba(46,204,113,.08),transparent 40%),
+      radial-gradient(circle at 85% 100%,rgba(230,57,70,.08),transparent 40%);
+  }
+  .dashboard{max-width:1700px;margin:0 auto;display:grid;
+    grid-template-columns:repeat(12,1fr);gap:16px}
+
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));
+    border:1px solid var(--border);border-radius:16px;padding:20px;
+    backdrop-filter:blur(12px);transition:.25s;position:relative;overflow:hidden}
+  .card:hover{border-color:rgba(244,162,97,.35);
+    box-shadow:0 12px 40px rgba(0,0,0,.5)}
+  .card-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;
+    text-transform:uppercase;letter-spacing:1.8px;color:var(--muted);
+    margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  .card-title::before{content:'';width:4px;height:14px;background:var(--gold);
+    border-radius:2px;box-shadow:0 0 10px var(--gold)}
+
+  /* TOP BAR */
+  .topbar{grid-column:span 12;display:flex;align-items:center;
+    justify-content:space-between;gap:16px;padding:16px 24px;
+    background:linear-gradient(135deg,var(--card),var(--bg2));
+    border:1px solid var(--border);border-radius:16px;position:relative;
+    overflow:hidden}
+  .topbar::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--radiant),var(--gold),var(--dire))}
+  .topbar h1{font-family:'Rajdhani';font-size:22px;font-weight:700;
+    letter-spacing:1px}
+  .topbar h1 span{color:var(--gold)}
+  .back-btn{display:inline-flex;align-items:center;gap:8px;
+    font-family:'Rajdhani';font-size:14px;font-weight:700;
+    text-transform:uppercase;letter-spacing:1.5px;padding:10px 22px;
+    border-radius:10px;border:1px solid var(--gold);cursor:pointer;
+    background:linear-gradient(135deg,rgba(244,162,97,.2),rgba(244,162,97,.05));
+    color:var(--gold);box-shadow:0 0 20px rgba(244,162,97,.2);
+    text-decoration:none;transition:.25s}
+  .back-btn:hover{transform:translateX(-3px);
+    box-shadow:0 0 30px rgba(244,162,97,.4)}
+
+  /* PLAYER TABS */
+  .player-tabs{grid-column:span 12;display:flex;gap:8px;flex-wrap:wrap;
+    padding:12px;background:var(--card);border-radius:14px;
+    border:1px solid var(--border)}
+  .ptab{display:flex;align-items:center;gap:8px;padding:8px 14px;
+    border-radius:10px;cursor:pointer;border:1px solid transparent;
+    transition:.2s;font-size:13px;font-weight:600;
+    background:rgba(255,255,255,.03)}
+  .ptab:hover{border-color:rgba(244,162,97,.4)}
+  .ptab.active{border-color:var(--gold);background:rgba(244,162,97,.1);
+    box-shadow:0 0 16px rgba(244,162,97,.2)}
+  .ptab .pav{width:28px;height:28px;border-radius:6px;overflow:hidden;
+    background:#1a2230;flex-shrink:0;border:1px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;justify-content:center;font-size:9px;
+    font-family:'Rajdhani';font-weight:700;color:var(--gold)}
+  .ptab .pav img{width:100%;height:100%;object-fit:cover;display:block}
+  .ptab.radiant{border-left:3px solid var(--radiant)}
+  .ptab.dire{border-left:3px solid var(--dire)}
+
+  /* PLAYER DETAIL */
+  .pdetail{grid-column:span 12;display:none;
+    grid-template-columns:repeat(12,1fr);gap:16px}
+  .pdetail.active{display:grid}
+  .phead{grid-column:span 12;display:flex;align-items:center;gap:20px;
+    padding:20px;background:linear-gradient(135deg,var(--card),var(--bg2));
+    border:1px solid var(--border);border-radius:16px}
+  .phead .pav{width:80px;height:80px;border-radius:14px;overflow:hidden;
+    background:#1a2230;border:2px solid rgba(255,255,255,.1);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Rajdhani';font-size:18px;font-weight:700;color:var(--gold)}
+  .phead .pav img{width:100%;height:100%;object-fit:cover;display:block}
+  .phead.radiant .pav{border-color:rgba(46,204,113,.5)}
+  .phead.dire .pav{border-color:rgba(230,57,70,.5)}
+  .phead .pinfo{flex:1}
+  .phead .pname{font-family:'Rajdhani';font-size:26px;font-weight:700}
+  .phead .phero{font-size:12px;color:var(--muted);letter-spacing:2px;
+    text-transform:uppercase;margin-top:4px}
+  .phead .pkda{font-family:'JetBrains Mono';font-size:22px;font-weight:700}
+  .kda-k{color:var(--radiant)} .kda-d{color:var(--dire)} .kda-a{color:var(--blue)}
+  .phead .ptags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .ptag{font-size:10px;padding:4px 10px;border-radius:6px;
+    background:rgba(255,255,255,.05);color:var(--muted);
+    text-transform:uppercase;letter-spacing:1px}
+
+  /* STAT GRID */
+  .stat-grid{grid-column:span 12;display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .stat-box{background:rgba(255,255,255,.02);
+    border:1px solid rgba(255,255,255,.05);
+    border-radius:12px;padding:14px;text-align:center}
+  .stat-box .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:1.5px;margin-bottom:6px}
+  .stat-box .val{font-family:'JetBrains Mono';font-size:20px;font-weight:700}
+  .val.gold{color:var(--gold)} .val.green{color:var(--radiant)}
+  .val.red{color:var(--dire)} .val.blue{color:var(--blue)}
+  .val.purple{color:var(--purple)}
+
+  /* TABLES */
+  .scroll{max-height:420px;overflow-y:auto;border-radius:12px;
+    border:1px solid rgba(255,255,255,.05)}
+  .scroll::-webkit-scrollbar{width:6px}
+  .scroll::-webkit-scrollbar-track{background:rgba(255,255,255,.02)}
+  .scroll::-webkit-scrollbar-thumb{background:rgba(244,162,97,.3);
+    border-radius:3px}
+
+  .col-6{grid-column:span 6} .col-4{grid-column:span 4}
+
+  .kill-row{display:flex;align-items:center;gap:10px;padding:8px 10px;
+    border-bottom:1px solid rgba(255,255,255,.03);font-size:12px}
+  .kill-row:hover{background:rgba(255,255,255,.03)}
+  .kill-row .time{font-family:'JetBrains Mono';color:var(--muted);
+    font-weight:700;min-width:52px}
+  .kill-row .hero{display:flex;align-items:center;gap:6px}
+  .kill-row .hero .himg{width:26px;height:26px;border-radius:5px;
+    overflow:hidden;background:#1a2230;flex-shrink:0;display:flex;
+    align-items:center;justify-content:center;font-size:8px;
+    font-family:'Rajdhani';font-weight:700;color:var(--gold)}
+  .kill-row .hero .himg img{width:100%;height:100%;object-fit:cover;
+    display:block}
+  .kill-row .skull{color:var(--dire);font-weight:700}
+  .kill-row .smoke{font-size:9px;padding:2px 6px;border-radius:4px;
+    background:rgba(244,162,97,.15);color:var(--gold);
+    text-transform:uppercase;letter-spacing:1px;font-weight:700}
+
+  .ab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:8px}
+  .ab-card{background:rgba(255,255,255,.02);
+    border:1px solid rgba(255,255,255,.05);
+    border-radius:10px;padding:10px;display:flex;justify-content:space-between;
+    align-items:center;font-size:12px}
+  .ab-card .aname{color:var(--muted);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;max-width:150px}
+  .ab-card .acount{font-family:'JetBrains Mono';font-weight:700;
+    color:var(--gold)}
+
+  .item-row{display:flex;align-items:center;gap:10px;padding:6px 10px;
+    border-bottom:1px solid rgba(255,255,255,.03);font-size:12px}
+  .item-row:hover{background:rgba(255,255,255,.03)}
+  .item-row .iimg{width:32px;height:32px;border-radius:6px;overflow:hidden;
+    background:#1a2230;flex-shrink:0;display:flex;align-items:center;
+    justify-content:center;font-size:8px;color:var(--gold)}
+  .item-row .iimg img{width:100%;height:100%;object-fit:contain;display:block}
+  .item-row .iname{flex:1;color:var(--muted)}
+  .item-row .icount{font-family:'JetBrains Mono';font-weight:700}
+
+  .bb-row{display:flex;align-items:center;gap:10px;padding:6px 10px;
+    border-bottom:1px solid rgba(255,255,255,.03);font-size:12px}
+  .bb-row .time{font-family:'JetBrains Mono';color:var(--gold);
+    font-weight:700}
+
+  @media(max-width:1200px){
+    .col-4,.col-6{grid-column:span 12}
+    .phead{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- TOP BAR с кнопкой "На главную" -->
+  <div class="topbar">
+    <h1>🔍 Детали игроков · <span>TI 2026 Grand Final</span></h1>
+    <a href="index.html" class="back-btn">← На главную</a>
+  </div>
+
+  <!-- PLAYER TABS -->
+  <div class="player-tabs" id="playerTabs"></div>
+
+  <!-- PLAYER DETAIL CONTAINER -->
+  <div id="playerDetailContainer" style="grid-column:span 12;
+    display:grid;grid-template-columns:repeat(12,1fr);gap:16px"></div>
+
+</div>
+
+<script>
+/* ============================================================
+   ДАННЫЕ ИЗ 8960991322.json (полная версия)
+   ============================================================ */
+const MATCH = {
+  "duration": 3862,
+  "radiant_win": false,
+  "radiant_score": 31,
+  "dire_score": 34,
+  "players": [
+    {
+      "player_slot": 0, "isRadiant": true, "team": "radiant",
+      "name": "Rin", "personaname": "Rin",
+      "hero_slug": "juggernaut", "position": 1,
+      "kills": 8, "deaths": 5, "assists": 8,
+      "gold_per_min": 769, "xp_per_min": 870, "net_worth": 40422,
+      "hero_damage": 46111, "tower_damage": 1919, "hero_healing": 12903,
+      "last_hits": 894, "denies": 31, "level": 28,
+      "obs_placed": 0, "sen_placed": 0, "creeps_stacked": 3, "camps_stacked": 1,
+      "rune_pickups": 11, "buyback_count": 1,
+      "kills_log": [
+        {"time":232,"key":"npc_dota_hero_dark_seer"},
+        {"time":1053,"key":"npc_dota_hero_mirana"},
+        {"time":2933,"key":"npc_dota_hero_life_stealer"},
+        {"time":2953,"key":"npc_dota_hero_mirana"},
+        {"time":3194,"key":"npc_dota_hero_bane"},
+        {"time":3203,"key":"npc_dota_hero_life_stealer"},
+        {"smoke":true,"time":3348,"key":"npc_dota_hero_mirana"},
+        {"time":3779,"key":"npc_dota_hero_mirana"}
+      ],
+      "buyback_log": [{"time":3803}],
+      "runes_log": [
+        {"time":0,"key":"5"},{"time":720,"key":"5"},{"time":1213,"key":"2"},
+        {"time":1707,"key":"5"},{"time":2041,"key":"3"},{"time":2177,"key":"5"},
+        {"time":2450,"key":"5"},{"time":2741,"key":"5"},{"time":3023,"key":"0"},
+        {"time":3144,"key":"9"},{"time":3232,"key":"5"}
+      ],
+      "purchase_log": [
+        {"time":-90,"key":"tango"},{"time":-90,"key":"quelling_blade"},
+        {"time":-90,"key":"magic_stick"},{"time":-90,"key":"branches"},
+        {"time":-90,"key":"faerie_fire"},{"time":-90,"key":"branches"},
+        {"time":92,"key":"boots_of_elves"},{"time":145,"key":"boots"},
+        {"time":232,"key":"gloves"},{"time":238,"key":"enchanted_mango"},
+        {"time":276,"key":"power_treads"},{"time":349,"key":"ring_of_health"},
+        {"time":441,"key":"void_stone"},{"time":481,"key":"pers"},
+        {"time":516,"key":"broadsword"},{"time":644,"key":"broadsword"},
+        {"time":672,"key":"bfury"},{"time":708,"key":"boots_of_elves"},
+        {"time":813,"key":"blade_of_alacrity"},{"time":814,"key":"tpscroll"},
+        {"time":890,"key":"yasha"},{"time":935,"key":"javelin"},
+        {"time":937,"key":"diadem"},{"time":1080,"key":"manta"},
+        {"time":1089,"key":"blitz_knuckles"},{"time":1252,"key":"demon_edge"},
+        {"time":1283,"key":"javelin"},{"time":1349,"key":"monkey_king_bar"},
+        {"time":1464,"key":"blink"},{"time":1633,"key":"eagle"},
+        {"time":1832,"key":"claymore"},{"time":1871,"key":"talisman_of_evasion"},
+        {"time":1886,"key":"butterfly"},{"time":1959,"key":"tpscroll"},
+        {"time":2222,"key":"eagle"},{"time":2233,"key":"swift_blink"},
+        {"time":2860,"key":"mithril_hammer"},{"time":2861,"key":"ogre_axe"},
+        {"time":2861,"key":"black_king_bar"},{"time":3029,"key":"splintmail"},
+        {"time":3042,"key":"nullifier"},{"time":3042,"key":"relic"},
+        {"time":3323,"key":"mithril_hammer"},{"time":3323,"key":"belt_of_strength"},
+        {"time":3323,"key":"basher"},{"time":3323,"key":"ogre_axe"},
+        {"time":3323,"key":"belt_of_strength"},{"time":3323,"key":"sange"},
+        {"time":3323,"key":"abyssal_blade"}
+      ],
+      "item_uses": {
+        "power_treads":474,"swift_blink":36,"tpscroll":4,"quelling_blade":14,
+        "enchanted_mango":1,"nullifier":8,"manta":39,"blink":20,"bfury":42,
+        "refresher_shard":1,"madstone_bundle":44,"black_king_bar":4,
+        "magic_stick":5,"tango":3,"abyssal_blade":3,"riftshadow_prism":4
+      },
+      "ability_uses": {
+        "juggernaut_blade_fury":27,"juggernaut_healing_ward":16,
+        "juggernaut_omni_slash":10,"twin_gate_portal_warp":1,"ability_lamp_use":6
+      },
+      "killed_by": {"npc_dota_hero_pangolier":3,"npc_dota_hero_dark_seer":2},
+      "kill_streaks": {"3":1,"4":1,"5":1},
+      "multi_kills": {"2":1},
+      "healing": {"npc_dota_hero_juggernaut":24282},
+      "life_state": {"0":3556,"1":13,"2":294}
+    },
+    {
+      "player_slot": 1, "isRadiant": true, "team": "radiant",
+      "name": "Noticed", "personaname": "strafe instructor",
+      "hero_slug": "axe", "position": 3,
+      "kills": 11, "deaths": 5, "assists": 10,
+      "gold_per_min": 600, "xp_per_min": 673, "net_worth": 30109,
+      "hero_damage": 21179, "tower_damage": 148, "hero_healing": 0,
+      "last_hits": 484, "denies": 10, "level": 26,
+      "obs_placed": 1, "sen_placed": 0, "creeps_stacked": 2, "camps_stacked": 1,
+      "rune_pickups": 3, "buyback_count": 1,
+      "kills_log": [
+        {"time":129,"key":"npc_dota_hero_life_stealer"},
+        {"time":551,"key":"npc_dota_hero_life_stealer"},
+        {"smoke":true,"time":862,"key":"npc_dota_hero_mirana"},
+        {"smoke":true,"time":885,"key":"npc_dota_hero_bane"},
+        {"smoke":true,"time":1038,"key":"npc_dota_hero_bane"},
+        {"time":1170,"key":"npc_dota_hero_mirana"},
+        {"time":1717,"key":"npc_dota_hero_bane"},
+        {"time":1902,"key":"npc_dota_hero_mirana"},
+        {"time":1996,"key":"npc_dota_hero_dark_seer"},
+        {"time":3175,"key":"npc_dota_hero_dark_seer"},
+        {"smoke":true,"time":3439,"key":"npc_dota_hero_pangolier"}
+      ],
+      "buyback_log": [{"time":3799}],
+      "runes_log": [
+        {"time":422,"key":"8"},{"time":1106,"key":"8"},{"time":1268,"key":"8"},
+        {"time":1561,"key":"1"},{"time":2265,"key":"4"},{"time":2981,"key":"8"},
+        {"time":3629,"key":"5"}
+      ],
+      "purchase_log": [
+        {"time":-90,"key":"gauntlets"},{"time":-90,"key":"gauntlets"},
+        {"time":-90,"key":"ring_of_protection"},{"time":-90,"key":"gauntlets"},
+        {"time":-84,"key":"gauntlets"},{"time":0,"key":"tango"},
+        {"time":98,"key":"tango"},{"time":212,"key":"helm_of_iron_will"},
+        {"time":276,"key":"crown"},{"time":481,"key":"helm_of_the_dominator"},
+        {"time":522,"key":"boots"},{"time":579,"key":"tpscroll"},
+        {"time":580,"key":"chainmail"},{"time":645,"key":"blades_of_attack"},
+        {"time":664,"key":"phase_boots"},{"time":693,"key":"dust"},
+        {"time":693,"key":"dust"},{"time":809,"key":"blink"},
+        {"time":865,"key":"tpscroll"},{"time":895,"key":"ring_of_protection"},
+        {"time":947,"key":"soul_ring"},{"time":995,"key":"dust"},
+        {"time":1046,"key":"ogre_axe"},{"time":1152,"key":"tpscroll"},
+        {"time":1208,"key":"mithril_hammer"},{"time":1315,"key":"black_king_bar"},
+        {"time":1390,"key":"ward_sentry"},{"time":1392,"key":"dust"},
+        {"time":1480,"key":"tpscroll"},{"time":1723,"key":"tpscroll"},
+        {"time":1772,"key":"blade_of_alacrity"},{"time":1772,"key":"boots_of_elves"},
+        {"time":1772,"key":"yasha"},{"time":1772,"key":"diadem"},
+        {"time":1843,"key":"manta"},{"time":1909,"key":"tpscroll"},
+        {"time":1910,"key":"clarity"},{"time":2085,"key":"clarity"},
+        {"time":2085,"key":"clarity"},{"time":2210,"key":"aghanims_shard"},
+        {"time":2490,"key":"relic"},{"time":2499,"key":"splintmail"},
+        {"time":2510,"key":"nullifier"},{"time":2977,"key":"ring_of_health"},
+        {"time":2977,"key":"pers"},{"time":2977,"key":"void_stone"},
+        {"time":2977,"key":"ultimate_orb"},{"time":2982,"key":"sphere"},
+        {"time":3468,"key":"ring_of_tarrasque"},{"time":3528,"key":"tiara_of_selemene"},
+        {"time":3550,"key":"refresher"}
+      ],
+      "item_uses": {
+        "tpscroll":9,"fallen_sky":1,"mana_draught":9,"nullifier":11,
+        "famango":3,"soul_ring":27,"manta":39,"blink":55,"gem":3,
+        "jidi_pollen_bag":4,"refresher":1,"ward_observer":1,
+        "madstone_bundle":10,"clarity":3,"black_king_bar":6,"sphere":5,
+        "tango":6,"phase_boots":262,"helm_of_the_dominator":10,"dust":2,
+        "ash_legion_shield":1
+      },
+      "ability_uses": {
+        "axe_battle_hunger":83,"ability_capture":2,"axe_berserkers_call":42,
+        "twin_gate_portal_warp":2,"ability_lamp_use":11,"axe_culling_blade":12
+      },
+      "killed_by": {"npc_dota_hero_dark_seer":3,"npc_dota_hero_pangolier":1,"npc_dota_hero_life_stealer":1},
+      "kill_streaks": {"3":1,"4":1,"5":1,"6":1,"7":1,"8":1,"9":1},
+      "healing": {"npc_dota_hero_axe":36592},
+      "life_state": {"0":3555,"1":6,"2":302}
+    },
+    {
+      "player_slot": 2, "isRadiant": true, "team": "radiant",
+      "name": "No[o]ne-", "personaname": "Have fun",
+      "hero_slug": "invoker", "position": 2,
+      "kills": 1, "deaths": 5, "assists": 22,
+      "gold_per_min": 702, "xp_per_min": 695, "net_worth": 37505,
+      "hero_damage": 39792, "tower_damage": 6209, "hero_healing": 0,
+      "last_hits": 661, "denies": 16, "level": 27,
+      "obs_placed": 0, "sen_placed": 1, "creeps_stacked": 6, "camps_stacked": 2,
+      "rune_pickups": 6, "buyback_count": 1,
+      "kills_log": [{"time":2056,"key":"npc_dota_hero_bane"}],
+      "buyback_log": [{"time":3783}],
+      "runes_log": [
+        {"time":140,"key":"7"},{"time":726,"key":"0"},{"time":1070,"key":"5"},
+        {"time":1444,"key":"5"},{"time":2198,"key":"8"},{"time":3242,"key":"1"},
+        {"time":3384,"key":"5"}
+      ],
+      "purchase_log": [
+        {"time":-89,"key":"faerie_fire"},{"time":-89,"key":"circlet"},
+        {"time":-89,"key":"branches"},{"time":-89,"key":"ward_observer"},
+        {"time":-89,"key":"tango"},{"time":-89,"key":"circlet"},
+        {"time":-89,"key":"branches"},{"time":22,"key":"mantle"},
+        {"time":80,"key":"null_talisman"},{"time":108,"key":"magic_stick"},
+        {"time":140,"key":"branches"},{"time":171,"key":"clarity"},
+        {"time":191,"key":"magic_wand"},{"time":212,"key":"tango"},
+        {"time":272,"key":"crown"},{"time":332,"key":"clarity"},
+        {"time":373,"key":"robe"},{"time":427,"key":"clarity"},
+        {"time":594,"key":"staff_of_wizardry"},{"time":595,"key":"clarity"},
+        {"time":616,"key":"kaya"},{"time":649,"key":"meteor_hammer"},
+        {"time":702,"key":"boots"},{"time":961,"key":"travel_boots"},
+        {"time":980,"key":"ward_sentry"},{"time":1057,"key":"ogre_axe"},
+        {"time":1156,"key":"mithril_hammer"},{"time":1295,"key":"black_king_bar"},
+        {"time":1411,"key":"aghanims_shard"},{"time":1832,"key":"mystic_staff"},
+        {"time":1843,"key":"tiara_of_selemene"},{"time":1895,"key":"sheepstick"},
+        {"time":2038,"key":"vitality_booster"},{"time":2069,"key":"aeon_disk"},
+        {"time":2069,"key":"energy_booster"},{"time":2355,"key":"platemail"},
+        {"time":2469,"key":"splintmail"},{"time":2469,"key":"chasm_stone"},
+        {"time":2497,"key":"splintmail"},{"time":2497,"key":"chasm_stone"},
+        {"time":2499,"key":"shivas_guard"},{"time":3021,"key":"point_booster"},
+        {"time":3021,"key":"vitality_booster"},{"time":3022,"key":"soul_booster"},
+        {"time":3022,"key":"energy_booster"},{"time":3022,"key":"octarine_core"},
+        {"time":3022,"key":"tiara_of_selemene"},{"time":3151,"key":"travel_boots_2"},
+        {"time":3475,"key":"ring_of_tarrasque"},{"time":3475,"key":"tiara_of_selemene"},
+        {"time":3479,"key":"refresher"},{"time":3929,"key":"tpscroll"}
+      ],
+      "item_uses": {
+        "ward_sentry":1,"tpscroll":27,"meteor_hammer":17,"shivas_guard":13,
+        "branches":1,"magic_wand":8,"gem":8,"refresher":1,"clarity":4,
+        "madstone_bundle":15,"black_king_bar":7,"sheepstick":13,"tango":6,
+        "faerie_fire":1
+      },
+      "ability_uses": {
+        "invoker_ghost_walk":55,"plus_high_five":1,"invoker_quas":1134,
+        "invoker_cold_snap":14,"invoker_exort":1679,"invoker_ice_wall":33,
+        "twin_gate_portal_warp":6,"invoker_chaos_meteor":25,"invoker_alacrity":62,
+        "invoker_emp":9,"invoker_wex":1412,"invoker_sun_strike":41,
+        "invoker_invoke":692,"invoker_tornado":36,"ability_capture":2,
+        "invoker_forge_spirit":77,"ability_lamp_use":1,"invoker_deafening_blast":24
+      },
+      "killed_by": {"npc_dota_hero_dark_seer":2,"npc_dota_hero_life_stealer":2,"npc_dota_hero_mirana":1},
+      "kill_streaks": {},
+      "healing": {"npc_dota_hero_invoker":19499},
+      "life_state": {"0":3678,"1":15,"2":170}
+    },
+    {
+      "player_slot": 3, "isRadiant": true, "team": "radiant",
+      "name": "9Class", "personaname": "йоу",
+      "hero_slug": "rubick", "position": 4,
+      "kills": 2, "deaths": 11, "assists": 23,
+      "gold_per_min": 285, "xp_per_min": 517, "net_worth": 12671,
+      "hero_damage": 20841, "tower_damage": 0, "hero_healing": 0,
+      "last_hits": 86, "denies": 2, "level": 24,
+      "obs_placed": 11, "sen_placed": 23, "creeps_stacked": 18, "camps_stacked": 5,
+      "rune_pickups": 3, "buyback_count": 2,
+      "kills_log": [
+        {"time":695,"key":"npc_dota_hero_pangolier"},
+        {"time":801,"key":"npc_dota_hero_pangolier"}
+      ],
+      "buyback_log": [{"time":3186},{"time":3846}],
+      "runes_log": [
+        {"time":1081,"key":"9"},{"time":1442,"key":"6"},
+        {"time":3152,"key":"5"},{"time":3461,"key":"8"}
+      ],
+      "purchase_log": [
+        {"time":-89,"key":"circlet"},{"time":-89,"key":"faerie_fire"},
+        {"time":-89,"key":"tango"},{"time":-89,"key":"faerie_fire"},
+        {"time":-89,"key":"blood_grenade"},{"time":-89,"key":"branches"},
+        {"time":-85,"key":"ward_sentry"},{"time":20,"key":"tango"},
+        {"time":20,"key":"ward_sentry"},{"time":85,"key":"wind_lace"},
+        {"time":121,"key":"flask"},{"time":199,"key":"tpscroll"},
+        {"time":201,"key":"ward_observer"},{"time":305,"key":"ward_sentry"},
+        {"time":334,"key":"clarity"},{"time":335,"key":"blood_grenade"},
+        {"time":336,"key":"ward_observer"},{"time":395,"key":"boots"},
+        {"time":431,"key":"ward_sentry"},{"time":452,"key":"ward_observer"},
+        {"time":496,"key":"ward_sentry"},{"time":595,"key":"clarity"},
+        {"time":595,"key":"ward_observer"},{"time":595,"key":"ward_sentry"},
+        {"time":625,"key":"magic_stick"},{"time":625,"key":"branches"},
+        {"time":630,"key":"blood_grenade"},{"time":654,"key":"magic_wand"},
+        {"time":698,"key":"ward_sentry"},{"time":707,"key":"sobi_mask"},
+        {"time":726,"key":"clarity"},{"time":805,"key":"ward_observer"},
+        {"time":824,"key":"smoke_of_deceit"},{"time":972,"key":"ward_sentry"},
+        {"time":974,"key":"clarity"},{"time":992,"key":"ward_observer"},
+        {"time":999,"key":"ward_sentry"},{"time":1135,"key":"ward_observer"},
+        {"time":1228,"key":"blink"},{"time":1269,"key":"ward_observer"},
+        {"time":1269,"key":"ward_sentry"},{"time":1346,"key":"ward_sentry"},
+        {"time":1524,"key":"aghanims_shard"},{"time":1770,"key":"ward_sentry"},
+        {"time":1951,"key":"ward_observer"},{"time":1951,"key":"ward_sentry"},
+        {"time":2016,"key":"clarity"},{"time":2102,"key":"staff_of_wizardry"},
+        {"time":2125,"key":"void_stone"},{"time":2129,"key":"cyclone"},
+        {"time":2188,"key":"ward_sentry"},{"time":2188,"key":"ward_sentry"},
+        {"time":2189,"key":"dust"},{"time":2189,"key":"dust"},
+        {"time":2486,"key":"ward_sentry"},{"time":2694,"key":"ward_sentry"},
+        {"time":2694,"key":"ward_observer"},{"time":2706,"key":"ward_sentry"},
+        {"time":2903,"key":"ward_observer"},{"time":2906,"key":"ward_sentry"},
+        {"time":3143,"key":"ward_sentry"},{"time":3143,"key":"ward_sentry"},
+        {"time":3372,"key":"mystic_staff"},{"time":3389,"key":"wind_waker"},
+        {"time":3397,"key":"ward_sentry"},{"time":3558,"key":"ward_observer"},
+        {"time":3627,"key":"ward_sentry"},{"time":3665,"key":"ward_sentry"}
+      ],
+      "item_uses": {
+        "ward_sentry":15,"tpscroll":9,"polliwog_charm":7,"mana_draught":14,
+        "idol_of_screeauk":2,"ward_dispenser":28,"smoke_of_deceit":1,
+        "famango":3,"blink":50,"wind_waker":1,"magic_wand":19,"cyclone":3,
+        "spider_legs":7,"ward_observer":5,"clarity":5,"madstone_bundle":1,
+        "great_famango":1,"tango":6,"faerie_fire":2,"blood_grenade":3,
+        "flask":1,"greater_famango":1,"dust":1
+      },
+      "ability_uses": {
+        "dark_seer_ion_shell":5,"life_stealer_consume":4,"mirana_leap":23,
+        "rubick_spell_steal":22,"rubick_telekinesis_land_self":6,
+        "rubick_telekinesis":34,"pangolier_shield_crash":6,
+        "twin_gate_portal_warp":3,"rubick_telekinesis_land":21,
+        "bane_enfeeble":1,"mirana_starfall":1,"dark_seer_surge":22,
+        "bane_fiends_grip":2,"life_stealer_infest":4,"dark_seer_vacuum":1,
+        "dark_seer_wall_of_replica":1,"ability_capture":1,
+        "rubick_fade_bolt":91,"bane_nightmare":1,"ability_lamp_use":7,
+        "life_stealer_rage":14
+      },
+      "killed_by": {"npc_dota_hero_pangolier":5,"npc_dota_hero_dark_seer":1,"npc_dota_hero_life_stealer":4,"npc_dota_hero_mirana":1},
+      "kill_streaks": {},
+      "healing": {"illusion_npc_dota_hero_life_stealer":427,"npc_dota_hero_rubick":11026},
+      "life_state": {"0":3490,"1":33,"2":340}
+    },
+    {
+      "player_slot": 4, "isRadiant": true, "team": "radiant",
+      "name": "Dukalis", "personaname": "Dukalis",
+      "hero_slug": "hoodwink", "position": 5,
+      "kills": 8, "deaths": 8, "assists": 14,
+      "gold_per_min": 337, "xp_per_min": 489, "net_worth": 11171,
+      "hero_damage": 21828, "tower_damage": 0, "hero_healing": 1163,
+      "last_hits": 130, "denies": 1, "level": 24,
+      "obs_placed": 17, "sen_placed": 32, "creeps_stacked": 7, "camps_stacked": 3,
+      "rune_pickups": 5, "buyback_count": 2,
+      "kills_log": [
+        {"time":79,"key":"npc_dota_hero_mirana"},
+        {"time":327,"key":"npc_dota_hero_bane"},
+        {"time":382,"key":"npc_dota_hero_dark_seer"},
+        {"time":593,"key":"npc_dota_hero_pangolier"},
+        {"time":722,"key":"npc_dota_hero_mirana"},
+        {"smoke":true,"time":787,"key":"npc_dota_hero_bane"},
+        {"time":2116,"key":"npc_dota_hero_bane"},
+        {"time":3220,"key":"npc_dota_hero_mirana"}
+      ],
+      "buyback_log": [{"time":3272},{"time":3842}],
+      "runes_log": [
+        {"time":0,"key":"5"},{"time":361,"key":"3"},{"time":464,"key":"5"},
+        {"time":1227,"key":"5"},{"time":2281,"key":"2"}
+      ],
+      "purchase_log": [
+        {"charges":6,"time":-89,"key":"tango"},{"time":-89,"key":"branches"},
+        {"time":-89,"key":"branches"},{"time":-89,"key":"blood_grenade"},
+        {"time":-89,"key":"faerie_fire"},{"time":-89,"key":"smoke_of_deceit"},
+        {"time":1,"key":"flask"},{"time":26,"key":"enchanted_mango"},
+        {"time":108,"key":"magic_stick"},{"time":109,"key":"blood_grenade"},
+        {"time":110,"key":"clarity"},{"time":288,"key":"boots"},
+        {"time":289,"key":"ward_observer"},{"time":298,"key":"clarity"},
+        {"time":368,"key":"infused_raindrop"},{"time":369,"key":"clarity"},
+        {"time":460,"key":"blood_grenade"},{"time":461,"key":"ward_sentry"},
+        {"time":466,"key":"smoke_of_deceit"},{"time":559,"key":"ward_sentry"},
+        {"time":559,"key":"smoke_of_deceit"},{"time":564,"key":"circlet"},
+        {"time":567,"key":"sobi_mask"},{"time":575,"key":"circlet"},
+        {"time":599,"key":"magic_wand"},{"time":624,"key":"sobi_mask"},
+        {"time":625,"key":"ring_of_protection"},{"time":630,"key":"urn_of_shadows"},
+        {"time":690,"key":"dust"},{"time":726,"key":"wizard_hat"},
+        {"time":736,"key":"chainmail"},{"time":762,"key":"essence_distiller"},
+        {"time":812,"key":"ward_sentry"},{"time":813,"key":"blood_grenade"},
+        {"time":865,"key":"ward_observer"},{"time":865,"key":"ward_sentry"},
+        {"time":865,"key":"ward_sentry"},{"time":995,"key":"gem"},
+        {"time":1117,"key":"great_famango"},{"time":1177,"key":"ward_sentry"},
+        {"time":1178,"key":"ward_sentry"},{"time":1178,"key":"smoke_of_deceit"},
+        {"time":1261,"key":"ward_observer"},{"time":1261,"key":"ward_sentry"},
+        {"time":1337,"key":"tpscroll"},{"time":1337,"key":"ghost"},
+        {"time":1404,"key":"ward_observer"},{"time":1405,"key":"ward_sentry"},
+        {"time":1405,"key":"ward_sentry"},{"time":1464,"key":"ward_sentry"},
+        {"time":1464,"key":"ward_sentry"},{"time":1530,"key":"ward_observer"},
+        {"time":1530,"key":"ward_sentry"},{"time":1613,"key":"clarity"},
+        {"time":1613,"key":"clarity"},{"time":1677,"key":"smoke_of_deceit"},
+        {"time":1677,"key":"ward_observer"},{"time":1677,"key":"ward_sentry"},
+        {"time":1721,"key":"tpscroll"},{"time":1801,"key":"ward_observer"},
+        {"time":1801,"key":"ward_sentry"},{"time":1827,"key":"dust"},
+        {"time":1861,"key":"staff_of_wizardry"},{"time":1952,"key":"staff_of_wizardry"},
+        {"time":1953,"key":"wind_lace"},{"time":2027,"key":"void_stone"},
+        {"time":2064,"key":"cyclone"},{"time":2072,"key":"smoke_of_deceit"},
+        {"time":2072,"key":"ward_observer"},{"time":2072,"key":"ward_sentry"},
+        {"time":2073,"key":"ward_sentry"},{"time":2076,"key":"clarity"},
+        {"time":2082,"key":"dust"},{"time":2225,"key":"ward_observer"},
+        {"time":2225,"key":"ward_sentry"},{"time":2226,"key":"ward_sentry"},
+        {"time":2355,"key":"ward_observer"},{"time":2355,"key":"ward_sentry"},
+        {"time":2370,"key":"gem"},{"time":2440,"key":"tpscroll"},
+        {"time":2458,"key":"greater_famango"},{"time":2483,"key":"smoke_of_deceit"},
+        {"time":2483,"key":"ward_observer"},{"time":2483,"key":"ward_sentry"},
+        {"time":2619,"key":"mystic_staff"},{"time":2674,"key":"wind_waker"},
+        {"time":2703,"key":"ward_sentry"},{"time":2741,"key":"ward_sentry"},
+        {"time":2745,"key":"ward_observer"},{"time":2840,"key":"ward_sentry"},
+        {"time":2957,"key":"smoke_of_deceit"},{"time":2957,"key":"ward_sentry"},
+        {"time":2974,"key":"greater_famango"},{"time":2982,"key":"tpscroll"},
+        {"time":2983,"key":"clarity"},{"time":3042,"key":"ward_observer"},
+        {"time":3042,"key":"ward_sentry"},{"time":3150,"key":"ward_observer"},
+        {"time":3237,"key":"dust"},{"time":3253,"key":"ward_sentry"},
+        {"time":3276,"key":"gem"},{"time":3298,"key":"smoke_of_deceit"},
+        {"time":3298,"key":"ward_observer"},{"time":3298,"key":"ward_sentry"},
+        {"time":3373,"key":"clarity"},{"time":3373,"key":"clarity"},
+        {"time":3374,"key":"tpscroll"},{"time":3456,"key":"blink"},
+        {"time":3456,"key":"ward_observer"},{"time":3457,"key":"ward_sentry"},
+        {"time":3457,"key":"ward_sentry"},{"time":3457,"key":"clarity"},
+        {"time":3507,"key":"ward_sentry"},{"time":3690,"key":"smoke_of_deceit"},
+        {"time":3691,"key":"ward_observer"},{"time":3691,"key":"ward_sentry"},
+        {"time":3851,"key":"ward_observer"},{"time":3851,"key":"ward_sentry"},
+        {"time":3851,"key":"ward_sentry"}
+      ],
+      "item_uses": {
+        "ward_sentry":10,"tpscroll":12,"essence_distiller":11,
+        "smoke_of_deceit":10,"ward_dispenser":59,"enchanted_mango":1,
+        "wind_waker":4,"blink":1,"magic_wand":6,"gem":4,"cyclone":1,
+        "ward_observer":9,"ghost":1,"clarity":10,"madstone_bundle":1,
+        "magic_stick":2,"kobold_cup":8,"great_famango":2,"roshans_banner":1,
+        "tango":6,"blood_grenade":3,"faerie_fire":1,"dust":4,"greater_famango":1
+      },
+      "ability_uses": {
+        "hoodwink_sharpshooter_release":22,"hoodwink_acorn_shot":87,
+        "hoodwink_scurry":167,"twin_gate_portal_warp":5,
+        "hoodwink_sharpshooter":22,"ability_lamp_use":7,"hoodwink_bushwhack":87
+      },
+      "killed_by": {"npc_dota_hero_pangolier":3,"npc_dota_hero_dark_seer":3,"npc_dota_hero_bane":2},
+      "kill_streaks": {"3":1,"4":1},
+      "healing": {"npc_dota_hero_hoodwink":8838,"npc_dota_hero_juggernaut":1163},
+      "life_state": {"0":3619,"1":24,"2":220}
+    },
+    {
+      "player_slot": 128, "isRadiant": false, "team": "dire",
+      "name": "rue", "personaname": "rue",
+      "hero_slug": "bane", "position": 5,
+      "kills": 2, "deaths": 8, "assists": 20,
+      "gold_per_min": 302, "xp_per_min": 565, "net_worth": 16418,
+      "hero_damage": 13767, "tower_damage": 229, "hero_healing": 2988,
+      "last_hits": 31, "denies": 0, "level": 25,
+      "obs_placed": 10, "sen_placed": 27, "creeps_stacked": 16, "camps_stacked": 5,
+      "rune_pickups": 3, "buyback_count": 1,
+      "kills_log": [
+        {"time":605,"key":"npc_dota_hero_hoodwink"},
+        {"time":3841,"key":"npc_dota_hero_hoodwink"}
+      ],
+      "buyback_log": [{"time":3204}],
+      "runes_log": [
+        {"time":516,"key":"5"},{"time":845,"key":"8"},{"time":1700,"key":"8"},
+        {"time":1945,"key":"5"},{"time":2603,"key":"1"}
+      ],
+      "purchase_log": [
+        {"time":-89,"key":"tango"},{"time":-89,"key":"faerie_fire"},
+        {"charges":2,"time":-89,"key":"enchanted_mango"},
+        {"time":-89,"key":"blood_grenade"},
+        {"time":-89,"key":"branches"},{"time":-89,"key":"smoke_of_deceit"},
+        {"time":-89,"key":"branches"},{"time":18,"key":"tango"},
+        {"time":44,"key":"ward_sentry"},{"time":48,"key":"ward_observer"},
+        {"time":133,"key":"enchanted_mango"},{"time":146,"key":"blood_grenade"},
+        {"time":293,"key":"ward_sentry"},{"time":358,"key":"boots"},
+        {"time":414,"key":"ward_sentry"},{"time":414,"key":"smoke_of_deceit"},
+        {"time":425,"key":"magic_stick"},{"time":489,"key":"clarity"},
+        {"time":541,"key":"infused_raindrop"},{"time":608,"key":"ward_observer"},
+        {"time":610,"key":"wind_lace"},{"time":611,"key":"ward_sentry"},
+        {"time":613,"key":"tpscroll"},{"time":632,"key":"magic_wand"},
+        {"time":653,"key":"enchanted_mango"},{"time":700,"key":"tpscroll"},
+        {"time":766,"key":"ward_sentry"},{"time":766,"key":"ward_sentry"},
+        {"time":939,"key":"dust"},{"time":939,"key":"dust"},
+        {"time":940,"key":"smoke_of_deceit"},{"time":1048,"key":"ward_sentry"},
+        {"time":1207,"key":"point_booster"},{"time":1209,"key":"smoke_of_deceit"},
+        {"time":1266,"key":"ward_sentry"},{"time":1266,"key":"ward_observer"},
+        {"time":1268,"key":"ward_sentry"},{"time":1342,"key":"ward_sentry"},
+        {"time":1480,"key":"ward_sentry"},{"time":1572,"key":"ogre_axe"},
+        {"time":1668,"key":"ward_observer"},{"time":1668,"key":"ward_sentry"},
+        {"time":1905,"key":"staff_of_wizardry"},{"time":1956,"key":"blade_of_alacrity"},
+        {"time":1984,"key":"ultimate_scepter"},{"time":2013,"key":"ward_sentry"},
+        {"time":2014,"key":"smoke_of_deceit"},{"time":2135,"key":"ward_sentry"},
+        {"time":2329,"key":"dust"},{"time":2330,"key":"ward_sentry"},
+        {"time":2340,"key":"ward_observer"},{"time":2376,"key":"blink"},
+        {"time":2393,"key":"clarity"},{"time":2455,"key":"clarity"},
+        {"time":2571,"key":"ward_observer"},{"time":2572,"key":"ward_sentry"},
+        {"time":2572,"key":"ward_sentry"},{"time":2685,"key":"ward_observer"},
+        {"time":2685,"key":"ward_sentry"},{"time":2685,"key":"ward_sentry"},
+        {"time":2731,"key":"greater_famango"},{"time":2736,"key":"ring_of_regen"},
+        {"time":2759,"key":"tranquil_boots"},{"time":2768,"key":"quelling_blade"},
+        {"time":2769,"key":"ward_observer"},{"time":2769,"key":"ward_sentry"},
+        {"time":2868,"key":"smoke_of_deceit"},{"time":2904,"key":"ward_sentry"},
+        {"time":3021,"key":"ward_observer"},{"time":3022,"key":"ward_sentry"},
+        {"time":3114,"key":"tpscroll"},{"time":3114,"key":"tpscroll"},
+        {"time":3146,"key":"ward_sentry"},{"time":3150,"key":"ward_observer"},
+        {"time":3254,"key":"ward_sentry"},{"time":3254,"key":"ward_sentry"},
+        {"time":3285,"key":"ward_observer"},{"time":3291,"key":"vitality_booster"},
+        {"time":3291,"key":"energy_booster"},{"time":3325,"key":"greater_famango"},
+        {"time":3466,"key":"aeon_disk"},{"time":3555,"key":"ward_sentry"},
+        {"time":3556,"key":"ward_observer"},{"time":3597,"key":"ward_sentry"},
+        {"time":3597,"key":"ward_sentry"},{"time":3701,"key":"smoke_of_deceit"},
+        {"time":3701,"key":"ward_observer"},{"time":3702,"key":"ward_sentry"},
+        {"time":3702,"key":"ward_sentry"}
+      ],
+      "item_uses": {
+        "ward_sentry":11,"tpscroll":11,"demonicon":2,"smoke_of_deceit":7,
+        "ward_dispenser":40,"enchanted_mango":4,"quelling_blade":1,
+        "famango":3,"blink":18,"magic_wand":7,"ward_observer":4,
+        "madstone_bundle":3,"clarity":3,"magic_stick":3,"kobold_cup":7,
+        "tango":6,"blood_grenade":2,"faerie_fire":1,"essence_ring":4,
+        "dust":2,"greater_famango":3
+      },
+      "ability_uses": {
+        "bane_fiends_grip":17,"ability_capture":3,"bane_nightmare":18,
+        "twin_gate_portal_warp":4,"bane_brain_sap":37,"bane_nightmare_end":1,
+        "ability_lamp_use":17,"bane_enfeeble":27
+      },
+      "killed_by": {"npc_dota_hero_hoodwink":3,"npc_dota_hero_axe":3,"npc_dota_hero_invoker":1,"npc_dota_hero_juggernaut":1},
+      "kill_streaks": {},
+      "healing": {"npc_dota_hero_pangolier":1944,"npc_dota_hero_life_stealer":1044,"npc_dota_hero_bane":12864},
+      "life_state": {"0":3603,"1":11,"2":249}
+    },
+    {
+      "player_slot": 129, "isRadiant": false, "team": "dire",
+      "name": "Yatoro", "personaname": "SF46",
+      "hero_slug": "life_stealer", "position": 1,
+      "kills": 7, "deaths": 4, "assists": 13,
+      "gold_per_min": 825, "xp_per_min": 1010, "net_worth": 45071,
+      "hero_damage": 34525, "tower_damage": 18449, "hero_healing": 1572,
+      "last_hits": 829, "denies": 20, "level": 30,
+      "obs_placed": 1, "sen_placed": 0, "creeps_stacked": 2, "camps_stacked": 1,
+      "rune_pickups": 6, "buyback_count": 1,
+      "kills_log": [
+        {"time":1715,"key":"npc_dota_hero_rubick"},
+        {"time":2303,"key":"npc_dota_hero_rubick"},
+        {"time":2309,"key":"npc_dota_hero_invoker"},
+        {"time":3179,"key":"npc_dota_hero_rubick"},
+        {"time":3466,"key":"npc_dota_hero_axe"},
+        {"time":3833,"key":"npc_dota_hero_invoker"},
+        {"time":3845,"key":"npc_dota_hero_rubick"}
+      ],
+      "buyback_log": [{"time":3205}],
+      "runes_log": [
+        {"time":0,"key":"5"},{"time":1472,"key":"5"},{"time":1681,"key":"5"},
+        {"time":2030,"key":"5"},{"time":3701,"key":"2"},{"time":3731,"key":"1"}
+      ],
+      "purchase_log": [
+        {"time":-89,"key":"gauntlets"},{"time":-89,"key":"gauntlets"},
+        {"time":-89,"key":"faerie_fire"},{"time":-89,"key":"gauntlets"},
+        {"time":-89,"key":"quelling_blade"},{"time":18,"key":"tango"},
+        {"time":140,"key":"blades_of_attack"},{"time":244,"key":"boots"},
+        {"time":324,"key":"chainmail"},{"time":354,"key":"phase_boots"},
+        {"time":732,"key":"relic"},{"time":864,"key":"talisman_of_evasion"},
+        {"time":882,"key":"radiance"},{"time":919,"key":"blades_of_attack"},
+        {"time":932,"key":"tpscroll"},{"time":998,"key":"helm_of_iron_will"},
+        {"time":1029,"key":"gloves"},{"time":1100,"key":"great_famango"},
+        {"time":1118,"key":"ring_of_protection"},{"time":1122,"key":"armlet"},
+        {"time":1169,"key":"soul_ring"},{"time":1208,"key":"ogre_axe"},
+        {"time":1253,"key":"tpscroll"},{"time":1269,"key":"belt_of_strength"},
+        {"time":1302,"key":"boots_of_elves"},{"time":1326,"key":"sange"},
+        {"time":1374,"key":"blade_of_alacrity"},{"time":1407,"key":"tpscroll"},
+        {"time":1431,"key":"yasha"},{"time":1431,"key":"sange_and_yasha"},
+        {"time":1523,"key":"hyperstone"},{"time":1569,"key":"ring_of_protection"},
+        {"time":1570,"key":"buckler"},{"time":1720,"key":"assault"},
+        {"time":1720,"key":"platemail"},{"time":1723,"key":"tpscroll"},
+        {"time":1824,"key":"point_booster"},{"time":1825,"key":"blade_of_alacrity"},
+        {"time":1881,"key":"staff_of_wizardry"},{"time":1944,"key":"ogre_axe"},
+        {"time":1977,"key":"ultimate_scepter"},{"time":2025,"key":"tpscroll"},
+        {"time":2178,"key":"blitz_knuckles"},{"time":2178,"key":"javelin"},
+        {"time":2236,"key":"demon_edge"},{"time":2245,"key":"monkey_king_bar"},
+        {"time":2312,"key":"tpscroll"},{"time":2469,"key":"ultimate_scepter_2"},
+        {"time":2530,"key":"mithril_hammer"},{"time":2530,"key":"belt_of_strength"},
+        {"time":2555,"key":"basher"},{"time":2682,"key":"abyssal_blade"},
+        {"time":2690,"key":"splintmail"},{"time":2741,"key":"nullifier"},
+        {"time":3207,"key":"boots"},{"time":3207,"key":"travel_boots"},
+        {"time":3286,"key":"claymore"},{"time":3286,"key":"lifesteal"},
+        {"time":3334,"key":"satanic"},{"time":3334,"key":"reaver"}
+      ],
+      "item_uses": {
+        "armlet":284,"tpscroll":10,"quelling_blade":52,"nullifier":7,
+        "soul_ring":13,"satanic":2,"ward_observer":1,"madstone_bundle":29,
+        "great_famango":1,"tango":3,"phase_boots":146,"faerie_fire":1,
+        "abyssal_blade":5,"radiance":6
+      },
+      "ability_uses": {
+        "life_stealer_infest":23,"life_stealer_consume":22,"ability_capture":1,
+        "twin_gate_portal_warp":4,"life_stealer_open_wounds":34,
+        "life_stealer_rage":29
+      },
+      "killed_by": {"npc_dota_hero_axe":2,"npc_dota_hero_juggernaut":2},
+      "kill_streaks": {"3":2},
+      "multi_kills": {"2":2},
+      "healing": {"npc_dota_hero_pangolier":686,"npc_dota_hero_dark_seer":293,"illusion_npc_dota_hero_life_stealer":1044,"npc_dota_hero_life_stealer":131199,"illusion_npc_dota_hero_invoker":53,"npc_dota_hero_mirana":316,"npc_dota_hero_bane":224},
+      "life_state": {"0":3717,"1":13,"2":133}
+    },
+    {
+      "player_slot": 130, "isRadiant": false, "team": "dire",
+      "name": "Larl", "personaname": "lllllll_llllll",
+      "hero_slug": "pangolier", "position": 2,
+      "kills": 12, "deaths": 4, "assists": 19,
+      "gold_per_min": 684, "xp_per_min": 968, "net_worth": 38797,
+      "hero_damage": 31929, "tower_damage": 972, "hero_healing": 0,
+      "last_hits": 573, "denies": 13, "level": 29,
+      "obs_placed": 2, "sen_placed": 0, "creeps_stacked": 2, "camps_stacked": 2,
+      "rune_pickups": 12, "buyback_count": 1,
+      "kills_log": [
+        {"time":404,"key":"npc_dota_hero_rubick"},
+        {"time":736,"key":"npc_dota_hero_hoodwink"},
+        {"time":993,"key":"npc_dota_hero_rubick"},
+        {"smoke":true,"time":1133,"key":"npc_dota_hero_rubick"},
+        {"smoke":true,"time":1144,"key":"npc_dota_hero_hoodwink"},
+        {"smoke":true,"time":1326,"key":"npc_dota_hero_rubick"},
+        {"time":1737,"key":"npc_dota_hero_juggernaut"},
+        {"time":3203,"key":"npc_dota_hero_rubick"},
+        {"time":3233,"key":"npc_dota_hero_hoodwink"},
+        {"time":3453,"key":"npc_dota_hero_juggernaut"},
+        {"smoke":true,"time":3796,"key":"npc_dota_hero_juggernaut"},
+        {"time":3845,"key":"npc_dota_hero_axe"}
+      ],
+      "buyback_log": [{"time":3444}],
+      "runes_log": [
+        {"time":0,"key":"5"},{"time":142,"key":"7"},{"time":240,"key":"7"},
+        {"time":383,"key":"5"},{"time":514,"key":"4"},{"time":984,"key":"6"},
+        {"time":1236,"key":"5"},{"time":1273,"key":"8"},{"time":1688,"key":"8"},
+        {"time":2402,"key":"5"},{"time":2735,"key":"6"},{"time":2794,"key":"0"},
+        {"time":2964,"key":"5"},{"time":3365,"key":"6"}
+      ],
+      "purchase_log": [
+        {"time":-89,"key":"branches"},{"time":-89,"key":"branches"},
+        {"time":-89,"key":"tango"},{"time":-89,"key":"branches"},
+        {"time":-89,"key":"branches"},{"time":-89,"key":"quelling_blade"},
+        {"time":-89,"key":"ward_observer"},{"time":93,"key":"bottle"},
+        {"time":146,"key":"blight_stone"},{"time":153,"key":"clarity"},
+        {"time":160,"key":"tango"},{"time":199,"key":"clarity"},
+        {"time":213,"key":"magic_stick"},{"time":250,"key":"magic_wand"},
+        {"time":268,"key":"clarity"},{"time":277,"key":"ward_observer"},
+        {"time":336,"key":"boots"},{"time":337,"key":"clarity"},
+        {"time":406,"key":"clarity"},{"time":408,"key":"robe"},
+        {"time":507,"key":"blade_of_alacrity"},{"time":674,"key":"diffusal_blade"},
+        {"time":837,"key":"belt_of_strength"},{"time":837,"key":"power_treads"},
+        {"time":837,"key":"gloves"},{"time":1005,"key":"blink"},
+        {"time":1008,"key":"dust"},{"time":1154,"key":"aghanims_shard"},
+        {"time":1198,"key":"dust"},{"time":1206,"key":"tpscroll"},
+        {"time":1281,"key":"point_booster"},{"time":1379,"key":"tpscroll"},
+        {"time":1529,"key":"staff_of_wizardry"},{"time":1529,"key":"ogre_axe"},
+        {"time":1529,"key":"blade_of_alacrity"},{"time":1536,"key":"ultimate_scepter"},
+        {"time":1585,"key":"tpscroll"},{"time":1676,"key":"great_famango"},
+        {"time":1837,"key":"tpscroll"},{"time":1838,"key":"clarity"},
+        {"time":1910,"key":"mithril_hammer"},{"time":1910,"key":"belt_of_strength"},
+        {"time":1910,"key":"basher"},{"time":2344,"key":"ring_of_health"},
+        {"time":2344,"key":"pers"},{"time":2344,"key":"void_stone"},
+        {"time":2345,"key":"platemail"},{"time":2345,"key":"lotus_orb"},
+        {"time":2345,"key":"energy_booster"},{"time":2361,"key":"tpscroll"},
+        {"time":2361,"key":"tpscroll"},{"time":2684,"key":"ultimate_scepter_2"},
+        {"time":2689,"key":"clarity"},{"time":2972,"key":"tpscroll"},
+        {"time":2976,"key":"ogre_axe"},{"time":2976,"key":"belt_of_strength"},
+        {"time":2976,"key":"sange"},{"time":2980,"key":"abyssal_blade"},
+        {"time":3027,"key":"clarity"},{"time":3281,"key":"eagle"},
+        {"time":3289,"key":"disperser"},{"time":3295,"key":"tpscroll"},
+        {"time":3559,"key":"ring_of_tarrasque"},{"time":3559,"key":"refresher"},
+        {"time":3559,"key":"tiara_of_selemene"}
+      ],
+      "item_uses": {
+        "power_treads":605,"tpscroll":12,"mana_draught":17,"quelling_blade":12,
+        "bottle":68,"blink":72,"branches":1,"magic_wand":17,"gem":14,
+        "refresher":1,"ward_observer":2,"lotus_orb":10,"clarity":7,
+        "madstone_bundle":13,"great_famango":1,"disperser":6,"tango":6,
+        "diffusal_blade":20,"dust":2,"abyssal_blade":4
+      },
+      "ability_uses": {
+        "pangolier_gyroshell_stop":4,"pangolier_swashbuckle":161,
+        "pangolier_shield_crash":206,"twin_gate_portal_warp":6,
+        "pangolier_rollup_stop":7,"ability_lamp_use":2,"pangolier_gyroshell":16,
+        "pangolier_rollup":9
+      },
+      "killed_by": {"npc_dota_hero_hoodwink":1,"npc_dota_hero_rubick":2,"npc_dota_hero_axe":1},
+      "kill_streaks": {"3":2,"4":1,"5":1,"6":1,"7":1},
+      "multi_kills": {"2":1},
+      "healing": {"npc_dota_hero_pangolier":24065},
+      "life_state": {"0":3762,"1":19,"2":82}
+    },
+    {
+      "player_slot": 131, "isRadiant": false, "team": "dire",
+      "name": "not_me", "personaname": "aura zzq",
+      "hero_slug": "mirana", "position": 4,
+      "kills": 2, "deaths": 10, "assists": 25,
+      "gold_per_min": 389, "xp_per_min": 588, "net_worth": 18157,
+      "hero_damage": 22131, "tower_damage": 493, "hero_healing": 2309,
+      "last_hits": 200, "denies": 0, "level": 25,
+      "obs_placed": 17, "sen_placed": 24, "creeps_stacked": 19, "camps_stacked": 6,
+      "rune_pickups": 3, "buyback_count": 1,
+      "kills_log": [
+        {"time":329,"key":"npc_dota_hero_rubick"},
+        {"smoke":true,"time":949,"key":"npc_dota_hero_invoker"}
+      ],
+      "buyback_log": [{"time":3788}],
+      "runes_log": [
+        {"time":422,"key":"8"},{"time":533,"key":"5"},{"time":1700,"key":"3"},
+        {"time":2681,"key":"8"},{"time":2894,"key":"3"}
+      ],
+      "purchase_log": [
+        {"charges":6,"time":-89,"key":"tango"},{"time":-89,"key":"blood_grenade"},
+        {"time":-89,"key":"ward_sentry"},{"time":-89,"key":"branches"},
+        {"time":-89,"key":"circlet"},{"time":-89,"key":"branches"},
+        {"time":-89,"key":"branches"},{"time":16,"key":"flask"},
+        {"time":96,"key":"quelling_blade"},{"time":96,"key":"ward_sentry"},
+        {"time":197,"key":"clarity"},{"time":251,"key":"boots"},
+        {"time":254,"key":"tango"},{"time":341,"key":"magic_stick"},
+        {"time":342,"key":"blood_grenade"},{"time":343,"key":"ward_observer"},
+        {"time":343,"key":"ward_sentry"},{"time":372,"key":"magic_wand"},
+        {"time":391,"key":"tpscroll"},{"time":391,"key":"clarity"},
+        {"time":415,"key":"sobi_mask"},{"time":463,"key":"blood_grenade"},
+        {"time":465,"key":"ward_observer"},{"time":465,"key":"ward_sentry"},
+        {"time":534,"key":"ring_of_protection"},{"time":556,"key":"dust"},
+        {"time":572,"key":"clarity"},{"time":612,"key":"urn_of_shadows"},
+        {"time":627,"key":"smoke_of_deceit"},{"time":740,"key":"wizard_hat"},
+        {"time":745,"key":"ward_observer"},{"time":749,"key":"ward_sentry"},
+        {"time":817,"key":"chainmail"},{"time":832,"key":"clarity"},
+        {"time":887,"key":"essence_distiller"},{"time":895,"key":"ward_observer"},
+        {"time":895,"key":"ward_sentry"},{"time":895,"key":"ward_sentry"},
+        {"time":937,"key":"dust"},{"time":996,"key":"ward_observer"},
+        {"time":996,"key":"ward_sentry"},{"time":1075,"key":"ward_sentry"},
+        {"time":1156,"key":"ward_sentry"},{"time":1157,"key":"ward_observer"},
+        {"time":1157,"key":"ward_sentry"},{"time":1339,"key":"staff_of_wizardry"},
+        {"time":1377,"key":"void_stone"},{"time":1409,"key":"ward_observer"},
+        {"time":1409,"key":"ward_sentry"},{"time":1486,"key":"wind_lace"},
+        {"time":1531,"key":"cyclone"},{"time":1539,"key":"ward_observer"},
+        {"time":1539,"key":"ward_sentry"},{"time":1579,"key":"tpscroll"},
+        {"time":1620,"key":"smoke_of_deceit"},{"time":1767,"key":"ward_sentry"},
+        {"time":1822,"key":"ward_observer"},{"time":1824,"key":"ward_sentry"},
+        {"time":1829,"key":"gem"},{"time":1907,"key":"ward_sentry"},
+        {"time":1950,"key":"ward_observer"},{"time":1950,"key":"ward_sentry"},
+        {"time":2076,"key":"ward_observer"},{"time":2076,"key":"ward_sentry"},
+        {"time":2175,"key":"greater_famango"},{"time":2231,"key":"ward_sentry"},
+        {"time":2231,"key":"ward_sentry"},{"time":2242,"key":"ward_observer"},
+        {"time":2346,"key":"tpscroll"},{"time":2430,"key":"smoke_of_deceit"},
+        {"time":2459,"key":"staff_of_wizardry"},{"time":2459,"key":"ogre_axe"},
+        {"time":2459,"key":"blade_of_alacrity"},{"time":2497,"key":"point_booster"},
+        {"time":2499,"key":"ultimate_scepter"},{"time":2660,"key":"tpscroll"},
+        {"time":2685,"key":"ward_sentry"},{"time":2695,"key":"greater_famango"},
+        {"time":2727,"key":"clarity"},{"time":2768,"key":"clarity"},
+        {"time":2850,"key":"vitality_booster"},{"time":2850,"key":"aeon_disk"},
+        {"time":2850,"key":"energy_booster"},{"time":2887,"key":"ward_observer"},
+        {"time":2887,"key":"ward_sentry"},{"time":2887,"key":"ward_sentry"},
+        {"time":3093,"key":"greater_famango"},{"time":3289,"key":"smoke_of_deceit"},
+        {"time":3292,"key":"ward_observer"},{"time":3420,"key":"ward_observer"},
+        {"time":3552,"key":"mystic_staff"},{"time":3573,"key":"wind_waker"},
+        {"time":3579,"key":"greater_famango"},{"time":3581,"key":"tpscroll"}
+      ],
+      "item_uses": {
+        "ward_sentry":13,"tpscroll":15,"essence_distiller":21,"quelling_blade":23,
+        "ward_dispenser":63,"smoke_of_deceit":4,"famango":1,"wind_waker":2,
+        "branches":1,"magic_wand":4,"cyclone":6,"ward_observer":4,
+        "clarity":6,"madstone_bundle":7,"tango":9,"urn_of_shadows":2,
+        "blood_grenade":2,"flask":1,"dust":1,"greater_famango":3
+      },
+      "ability_uses": {
+        "mirana_arrow":85,"mirana_leap":98,"mirana_invis":22,"ability_capture":1,
+        "twin_gate_portal_warp":8,"ability_lamp_use":11,"mirana_starfall":69
+      },
+      "killed_by": {"npc_dota_hero_hoodwink":3,"npc_dota_hero_axe":3,"npc_dota_hero_juggernaut":4},
+      "kill_streaks": {},
+      "healing": {"npc_dota_hero_dark_seer":125,"npc_dota_hero_pangolier":1044,"npc_dota_hero_life_stealer":1044,"npc_dota_hero_mirana":10434},
+      "life_state": {"0":3420,"1":20,"2":423}
+    },
+    {
+      "player_slot": 132, "isRadiant": false, "team": "dire",
+      "name": "Collapse", "personaname": "pos0s1",
+      "hero_slug": "dark_seer", "position": 3,
+      "kills": 11, "deaths": 5, "assists": 17,
+      "gold_per_min": 812, "xp_per_min": 988, "net_worth": 40601,
+      "hero_damage": 35322, "tower_damage": 1255, "hero_healing": 0,
+      "last_hits": 643, "denies": 3, "level": 29,
+      "obs_placed": 0, "sen_placed": 1, "creeps_stacked": 15, "camps_stacked": 5,
+      "rune_pickups": 13, "buyback_count": 2,
+      "kills_log": [
+        {"time":797,"key":"npc_dota_hero_invoker"},
+        {"time":797,"key":"npc_dota_hero_hoodwink"},
+        {"time":801,"key":"npc_dota_hero_rubick"},
+        {"time":1789,"key":"npc_dota_hero_hoodwink"},
+        {"time":1904,"key":"npc_dota_hero_hoodwink"},
+        {"smoke":true,"time":2297,"key":"npc_dota_hero_juggernaut"},
+        {"time":2329,"key":"npc_dota_hero_axe"},
+        {"time":3219,"key":"npc_dota_hero_axe"},
+        {"smoke":true,"time":3781,"key":"npc_dota_hero_invoker"},
+        {"smoke":true,"time":3787,"key":"npc_dota_hero_axe"},
+        {"time":3842,"key":"npc_dota_hero_juggernaut"}
+      ],
+      "buyback_log": [{"time":3192},{"time":3848}],
+      "runes_log": [
+        {"time":602,"key":"1"},{"time":1029,"key":"5"},{"time":1029,"key":"5"},
+        {"time":1337,"key":"9"},{"time":1804,"key":"0"},{"time":1924,"key":"4"},
+        {"time":2135,"key":"8"},{"time":2179,"key":"5"},{"time":2411,"key":"9"},
+        {"time":2573,"key":"8"},{"time":2676,"key":"5"},{"time":2911,"key":"5"},
+        {"time":2962,"key":"8"},{"time":3481,"key":"4"},{"time":3565,"key":"5"},
+        {"time":3624,"key":"5"}
+      ],
+      "purchase_log": [
+        {"time":-89,"key":"circlet"},{"time":-89,"key":"tango"},
+        {"time":-89,"key":"quelling_blade"},{"time":-89,"key":"mantle"},
+        {"time":-89,"key":"branches"},{"time":-89,"key":"branches"},
+        {"time":111,"key":"sobi_mask"},{"time":130,"key":"tango"},
+        {"time":160,"key":"null_talisman"},{"time":253,"key":"crown"},
+        {"time":429,"key":"helm_of_iron_will"},{"time":567,"key":"helm_of_the_dominator"},
+        {"time":615,"key":"ring_of_protection"},{"time":615,"key":"gauntlets"},
+        {"time":615,"key":"gauntlets"},{"time":621,"key":"wind_lace"},
+        {"time":628,"key":"soul_ring"},{"time":679,"key":"magic_stick"},
+        {"time":701,"key":"magic_wand"},{"time":824,"key":"chasm_stone"},
+        {"time":826,"key":"tpscroll"},{"time":894,"key":"platemail"},
+        {"time":979,"key":"splintmail"},{"time":1080,"key":"tpscroll"},
+        {"time":1090,"key":"shivas_guard"},{"time":1171,"key":"tpscroll"},
+        {"time":1179,"key":"dust"},{"time":1179,"key":"dust"},
+        {"time":1233,"key":"blink"},{"time":1363,"key":"clarity"},
+        {"time":1363,"key":"tpscroll"},{"time":1368,"key":"aghanims_shard"},
+        {"time":1599,"key":"ring_of_health"},{"time":1599,"key":"pers"},
+        {"time":1599,"key":"void_stone"},{"time":1640,"key":"platemail"},
+        {"time":1643,"key":"lotus_orb"},{"time":1643,"key":"energy_booster"},
+        {"time":1837,"key":"vitality_booster"},{"time":1837,"key":"aeon_disk"},
+        {"time":1837,"key":"energy_booster"},{"time":2245,"key":"mystic_staff"},
+        {"time":2259,"key":"tiara_of_selemene"},{"time":2260,"key":"sheepstick"},
+        {"time":2343,"key":"tpscroll"},{"time":2588,"key":"mithril_hammer"},
+        {"time":2588,"key":"ogre_axe"},{"time":2588,"key":"black_king_bar"},
+        {"time":2962,"key":"ring_of_tarrasque"},{"time":2964,"key":"refresher"},
+        {"time":2964,"key":"tiara_of_selemene"},{"time":2965,"key":"tpscroll"},
+        {"time":3296,"key":"reaver"},{"time":3303,"key":"overwhelming_blink"},
+        {"time":3667,"key":"tpscroll"},{"time":3850,"key":"boots"},
+        {"time":3850,"key":"travel_boots"},{"time":3850,"key":"travel_boots_2"}
+      ],
+      "item_uses": {
+        "ward_sentry":1,"tpscroll":12,"quelling_blade":48,"shivas_guard":39,
+        "famango":1,"soul_ring":40,"blink":49,"magic_wand":9,"refresher":2,
+        "lotus_orb":28,"madstone_bundle":23,"clarity":1,"black_king_bar":2,
+        "sheepstick":15,"roshans_banner":1,"tango":6,"pogo_stick":58,
+        "helm_of_the_dominator":26,"overwhelming_blink":14,"riftshadow_prism":4,
+        "ash_legion_shield":6
+      },
+      "ability_uses": {
+        "dark_seer_ion_shell":226,"dark_seer_vacuum":19,"dark_seer_wall_of_replica":11,
+        "twin_gate_portal_warp":4,"ability_lamp_use":3,"dark_seer_surge":247
+      },
+      "killed_by": {"npc_dota_hero_hoodwink":1,"npc_dota_hero_axe":2,"dota_fountain":1,"npc_dota_hero_juggernaut":1},
+      "kill_streaks": {"3":2,"4":2,"5":1},
+      "multi_kills": {"2":2,"3":1},
+      "healing": {"npc_dota_hero_dark_seer":34383},
+      "life_state": {"0":3730,"1":6,"2":127}
+    }
+  ]
+};
+
+/* ============================================================
+   ХЕЛПЕРЫ
+   ============================================================ */
+function fmtTime(s){
+  if (s < 0) return 'pre';
+  const m = Math.floor(s/60);
+  const sec = s % 60;
+  return m + ':' + String(sec).padStart(2,'0');
+}
+function heroDisplayName(slug){
+  if (!slug) return '?';
+  return slug.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function heroShortName(slug){
+  if (!slug) return '?';
+  const map = {
+    'juggernaut':'JUG','axe':'AXE','invoker':'INV','rubick':'RUB','hoodwink':'HOOD',
+    'life_stealer':'LS','pangolier':'PANG','dark_seer':'DS','mirana':'MIRA','bane':'BANE'
+  };
+  return map[slug] || slug.slice(0,4).toUpperCase();
+}
+function buildHeroSources(hero){
+  return [
+    `https://www.dotabuff.com/assets/heroes/${hero}.jpg`,
+    `https://cdn.stratz.com/images/dota2/heroes/${hero}_lg.png`,
+    `https://steamcdn-a.akamaihd.net/apps/dota2/images/heroes/${hero}_full.png`,
+    `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${hero}.png`,
+    `https://api.opendota.com/apps/dota2/images/heroes/${hero}_full.png`
+  ];
+}
+function buildItemSources(item){
+  return [
+    `https://cdn.stratz.com/images/dota2/items/${item}.png`,
+    `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${item}.png`,
+    `https://raw.githubusercontent.com/HighGroundVision/Hyperstone/master/images/items/${item}.png`
+  ];
+}
+function createImg(container, sources, fallback, className){
+  let img = container.querySelector('img');
+  if (!img) {
+    container.innerHTML = '';
+    img = document.createElement('img');
+    if (className) img.className = className;
+    container.appendChild(img);
+  }
+  let idx = 0;
+  img.onerror = function(){
+    idx++;
+    if (idx < sources.length) {
+      img.src = sources[idx];
+    } else {
+      container.innerHTML = '';
+      container.textContent = fallback || '?';
+    }
+  };
+  img.src = sources[0];
+}
+
+/* ============================================================
+   РЕНДЕР
+   ============================================================ */
+(function renderPlayerDetails(){
+  const tabsEl = document.getElementById('playerTabs');
+  const detailEl = document.getElementById('playerDetailContainer');
+
+  MATCH.players.forEach((p, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'ptab ' + p.team;
+    tab.dataset.index = i;
+
+    const av = document.createElement('div');
+    av.className = 'pav';
+    av.textContent = heroShortName(p.hero_slug);
+    createImg(av, buildHeroSources(p.hero_slug), heroShortName(p.hero_slug));
+
+    const info = document.createElement('div');
+    info.innerHTML = `<div style="font-family:'Rajdhani';font-weight:700">${p.name}</div>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;
+        letter-spacing:1px">${heroDisplayName(p.hero_slug)}</div>`;
+
+    tab.appendChild(av);
+    tab.appendChild(info);
+    tab.addEventListener('click', () => selectPlayer(i));
+    tabsEl.appendChild(tab);
+  });
+
+  MATCH.players.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'pdetail';
+    div.id = 'pdetail-' + i;
+    detailEl.appendChild(div);
+  });
+
+  function selectPlayer(idx){
+    document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.ptab')[idx].classList.add('active');
+    document.querySelectorAll('.pdetail').forEach(d => d.classList.remove('active'));
+    document.getElementById('pdetail-' + idx).classList.add('active');
+    renderPlayerContent(idx);
+    // обновляем hash без прыжка
+    history.replaceState(null, '', '#player-' + idx);
+  }
+
+  function renderPlayerContent(idx){
+    const p = MATCH.players[idx];
+    const el = document.getElementById('pdetail-' + idx);
+    if (el.dataset.rendered) return;
+    el.dataset.rendered = '1';
+
+    // HEAD
+    const head = document.createElement('div');
+    head.className = 'phead ' + p.team;
+    head.innerHTML = `
+      <div class="pav">${heroShortName(p.hero_slug)}</div>
+      <div class="pinfo">
+        <div class="pname">${p.name}</div>
+        <div class="phero">${heroDisplayName(p.hero_slug)} · POS ${p.position}</div>
+        <div class="ptags">
+          <span class="ptag">${p.team === 'radiant' ? 'Radiant' : 'Dire'}</span>
+          <span class="ptag">Уровень ${p.level}</span>
+          <span class="ptag">${p.last_hits} LH / ${p.denies} DN</span>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="pkda">
+          <span class="kda-k">${p.kills}</span><span class="kda-sep">/</span>
+          <span class="kda-d">${p.deaths}</span><span class="kda-sep">/</span>
+          <span class="kda-a">${p.assists}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">
+          GPM ${p.gold_per_min} · XPM ${p.xp_per_min} · NW ${(p.net_worth/1000).toFixed(1)}k
+        </div>
+      </div>`;
+    el.appendChild(head);
+    createImg(head.querySelector('.pav'),
+      buildHeroSources(p.hero_slug), heroShortName(p.hero_slug));
+
+    // STATS
+    const stats = document.createElement('div');
+    stats.className = 'stat-grid';
+    [
+      {l:'GPM', v:p.gold_per_min, c:'gold'},
+      {l:'XPM', v:p.xp_per_min, c:'blue'},
+      {l:'Net Worth', v:(p.net_worth/1000).toFixed(1)+'k', c:'purple'},
+      {l:'Урон по героям', v:(p.hero_damage/1000).toFixed(1)+'k', c:'green'},
+      {l:'Урон по строениям', v:(p.tower_damage/1000).toFixed(1)+'k', c:'gold'},
+      {l:'Лечение', v:(p.hero_healing/1000).toFixed(1)+'k', c:'green'},
+      {l:'Убийства', v:p.kills, c:'green'},
+      {l:'Смерти', v:p.deaths, c:'red'},
+      {l:'Помощь', v:p.assists, c:'blue'},
+      {l:'Руны', v:p.rune_pickups, c:'purple'},
+      {l:'Варды (obs/sen)', v:p.obs_placed+'/'+p.sen_placed, c:'gold'},
+      {l:'Стаки', v:p.creeps_stacked+'/'+p.camps_stacked, c:'blue'},
+    ].forEach(s => {
+      const box = document.createElement('div');
+      box.className = 'stat-box';
+      box.innerHTML = `<div class="lbl">${s.l}</div>
+        <div class="val ${s.c}">${s.v}</div>`;
+      stats.appendChild(box);
+    });
+    el.appendChild(stats);
+
+    // KILLS
+    const killsCard = document.createElement('div');
+    killsCard.className = 'card col-6';
+    killsCard.innerHTML = '<div class="card-title">Убийства</div>';
+    const killsScroll = document.createElement('div');
+    killsScroll.className = 'scroll';
+    if (p.kills_log && p.kills_log.length) {
+      p.kills_log.forEach(k => {
+        const row = document.createElement('div');
+        row.className = 'kill-row';
+        row.innerHTML = `
+          <span class="time">${fmtTime(k.time)}</span>
+          <div class="hero">
+            <div class="himg">${heroShortName(k.key.replace('npc_dota_hero_',''))}</div>
+            <span>${heroDisplayName(k.key.replace('npc_dota_hero_',''))}</span>
+          </div>
+          <span class="skull">☠</span>
+          ${k.smoke ? '<span class="smoke">smoke</span>' : ''}`;
+        const himg = row.querySelector('.himg');
+        const slug = k.key.replace('npc_dota_hero_','');
+        createImg(himg, buildHeroSources(slug), heroShortName(slug));
+        killsScroll.appendChild(row);
+      });
+    } else {
+      killsScroll.innerHTML = '<div style="padding:12px;color:var(--muted)">Нет убийств</div>';
+    }
+    killsCard.appendChild(killsScroll);
+    el.appendChild(killsCard);
+
+    // DEATHS
+    const deathsCard = document.createElement('div');
+    deathsCard.className = 'card col-6';
+    deathsCard.innerHTML = '<div class="card-title">Смерти (кто убил)</div>';
+    const deathsScroll = document.createElement('div');
+    deathsScroll.className = 'scroll';
+    if (p.killed_by && Object.keys(p.killed_by).length) {
+      Object.entries(p.killed_by).forEach(([slug, count]) => {
+        const row = document.createElement('div');
+        row.className = 'kill-row';
+        row.innerHTML = `
+          <div class="hero">
+            <div class="himg">${heroShortName(slug.replace('npc_dota_hero_',''))}</div>
+            <span>${heroDisplayName(slug.replace('npc_dota_hero_',''))}</span>
+          </div>
+          <span style="margin-left:auto;font-family:'JetBrains Mono';font-weight:700;
+            color:var(--dire)">×${count}</span>`;
+        const himg = row.querySelector('.himg');
+        const s = slug.replace('npc_dota_hero_','');
+        createImg(himg, buildHeroSources(s), heroShortName(s));
+        deathsScroll.appendChild(row);
+      });
+    } else {
+      deathsScroll.innerHTML = '<div style="padding:12px;color:var(--muted)">Нет смертей</div>';
+    }
+    deathsCard.appendChild(deathsScroll);
+    el.appendChild(deathsCard);
+
+    // PURCHASES
+    const buyCard = document.createElement('div');
+    buyCard.className = 'card col-6';
+    buyCard.innerHTML = '<div class="card-title">Покупки</div>';
+    const buyScroll = document.createElement('div');
+    buyScroll.className = 'scroll';
+    if (p.purchase_log && p.purchase_log.length) {
+      [...p.purchase_log].sort((a,b) => a.time - b.time).forEach(pur => {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
+          <span class="time" style="min-width:52px">${fmtTime(pur.time)}</span>
+          <div class="iimg">${pur.key.slice(0,4).toUpperCase()}</div>
+          <span class="iname">${pur.key.replace(/_/g,' ')}</span>`;
+        createImg(row.querySelector('.iimg'),
+          buildItemSources(pur.key), pur.key.slice(0,4).toUpperCase());
+        buyScroll.appendChild(row);
+      });
+    }
+    buyCard.appendChild(buyScroll);
+    el.appendChild(buyCard);
+
+    // ITEM USES
+    const itemCard = document.createElement('div');
+    itemCard.className = 'card col-6';
+    itemCard.innerHTML = '<div class="card-title">Использование предметов</div>';
+    const itemScroll = document.createElement('div');
+    itemScroll.className = 'scroll';
+    if (p.item_uses && Object.keys(p.item_uses).length) {
+      Object.entries(p.item_uses).sort((a,b) => b[1] - a[1]).forEach(([key, count]) => {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
+          <div class="iimg">${key.slice(0,4).toUpperCase()}</div>
+          <span class="iname">${key.replace(/_/g,' ')}</span>
+          <span class="icount">${count}×</span>`;
+        createImg(row.querySelector('.iimg'),
+          buildItemSources(key), key.slice(0,4).toUpperCase());
+        itemScroll.appendChild(row);
+      });
+    }
+    itemCard.appendChild(itemScroll);
+    el.appendChild(itemCard);
+
+    // ABILITIES
+    const abCard = document.createElement('div');
+    abCard.className = 'card col-6';
+    abCard.innerHTML = '<div class="card-title">Способности</div>';
+    const abScroll = document.createElement('div');
+    abScroll.className = 'scroll';
+    if (p.ability_uses && Object.keys(p.ability_uses).length) {
+      const abGrid = document.createElement('div');
+      abGrid.className = 'ab-grid';
+      abGrid.style.padding = '8px';
+      Object.entries(p.ability_uses).sort((a,b) => b[1] - a[1]).forEach(([key, count]) => {
+        const card = document.createElement('div');
+        card.className = 'ab-card';
+        card.innerHTML = `<span class="aname">${key.replace(/_/g,' ')}</span>
+          <span class="acount">${count}×</span>`;
+        abGrid.appendChild(card);
+      });
+      abScroll.appendChild(abGrid);
+    }
+    abCard.appendChild(abScroll);
+    el.appendChild(abCard);
+
+    // BUYBACK
+    const bbCard = document.createElement('div');
+    bbCard.className = 'card col-4';
+    bbCard.innerHTML = '<div class="card-title">Байбеки</div>';
+    const bbScroll = document.createElement('div');
+    bbScroll.className = 'scroll';
+    if (p.buyback_log && p.buyback_log.length) {
+      p.buyback_log.forEach(bb => {
+        const row = document.createElement('div');
+        row.className = 'bb-row';
+        row.innerHTML = `<span class="time">${fmtTime(bb.time)}</span>
+          <span style="color:var(--muted)">Байбек</span>`;
+        bbScroll.appendChild(row);
+      });
+    } else {
+      bbScroll.innerHTML = '<div style="padding:12px;color:var(--muted)">Нет байбеков</div>';
+    }
+    bbCard.appendChild(bbScroll);
+    el.appendChild(bbCard);
+
+    // RUNES
+    const runeCard = document.createElement('div');
+    runeCard.className = 'card col-4';
+    runeCard.innerHTML = '<div class="card-title">Руны</div>';
+    const runeScroll = document.createElement('div');
+    runeScroll.className = 'scroll';
+    if (p.runes_log && p.runes_log.length) {
+      p.runes_log.forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'bb-row';
+        row.innerHTML = `<span class="time">${fmtTime(r.time)}</span>
+          <span style="color:var(--muted)">Руна #${r.key}</span>`;
+        runeScroll.appendChild(row);
+      });
+    } else {
+      runeScroll.innerHTML = '<div style="padding:12px;color:var(--muted)">Нет рун</div>';
+    }
+    runeCard.appendChild(runeScroll);
+    el.appendChild(runeCard);
+
+    // STREAKS
+    const streakCard = document.createElement('div');
+    streakCard.className = 'card col-4';
+    streakCard.innerHTML = '<div class="card-title">Серии убийств</div>';
+    const streakContent = document.createElement('div');
+    streakContent.style.padding = '8px';
+    if (p.kill_streaks && Object.keys(p.kill_streaks).length) {
+      Object.entries(p.kill_streaks).forEach(([streak, count]) => {
+        const row = document.createElement('div');
+        row.className = 'bb-row';
+        row.innerHTML = `<span class="time">${streak} kills</span>
+          <span style="color:var(--muted)">×${count}</span>`;
+        streakContent.appendChild(row);
+      });
+    }
+    if (p.multi_kills && Object.keys(p.multi_kills).length) {
+      const mkWrap = document.createElement('div');
+      mkWrap.style.marginTop = '8px';
+      mkWrap.innerHTML = '<div style="font-size:11px;color:var(--muted);' +
+        'text-transform:uppercase;letter-spacing:1.5px;padding:0 10px 6px">Мульти-убийства</div>';
+      Object.entries(p.multi_kills).forEach(([mk, count]) => {
+        const row = document.createElement('div');
+        row.className = 'bb-row';
+        row.innerHTML = `<span class="time">${mk}×</span>
+          <span style="color:var(--muted)">×${count}</span>`;
+        mkWrap.appendChild(row);
+      });
+      streakContent.appendChild(mkWrap);
+    }
+    streakCard.appendChild(streakContent);
+    el.appendChild(streakCard);
+
+    // LIFE STATE
+    const lifeCard = document.createElement('div');
+    lifeCard.className = 'card col-4';
+    lifeCard.innerHTML = '<div class="card-title">Время в состояниях</div>';
+    const lifeContent = document.createElement('div');
+    lifeContent.style.padding = '8px';
+    if (p.life_state) {
+      const total = Object.values(p.life_state).reduce((a,b) => a+b, 0);
+      const labels = {'0':'Жив','1':'Активный','2':'Мёртв'};
+      Object.entries(p.life_state).forEach(([k, v]) => {
+        const pct = total ? (v/total*100).toFixed(1) : 0;
+        const row = document.createElement('div');
+        row.className = 'bb-row';
+        row.innerHTML = `<span class="time">${labels[k] || k}</span>
+          <span style="color:var(--muted)">${fmtTime(v)} (${pct}%)</span>`;
+        lifeContent.appendChild(row);
+      });
+    }
+    lifeCard.appendChild(lifeContent);
+    el.appendChild(lifeCard);
+
+    // HEALING
+    if (p.healing) {
+      const healCard = document.createElement('div');
+      healCard.className = 'card col-6';
+      healCard.innerHTML = '<div class="card-title">Лечение</div>';
+      const healScroll = document.createElement('div');
+      healScroll.className = 'scroll';
+      Object.entries(p.healing).forEach(([target, val]) => {
+        const row = document.createElement('div');
+        row.className = 'kill-row';
+        let label = target.replace('npc_dota_hero_','').replace('illusion_','(иллюзия) ');
+        row.innerHTML = `<span>${heroDisplayName(label)}</span>
+          <span style="margin-left:auto;font-family:'JetBrains Mono';
+            font-weight:700;color:var(--radiant)">${val.toLocaleString()}</span>`;
+        healScroll.appendChild(row);
+      });
+      healCard.appendChild(healScroll);
+      el.appendChild(healCard);
+    }
+  }
+
+  // --- выбор игрока с учётом #player-N ---
+  let initialIdx = 0;
+  const hashMatch = location.hash.match(/^#player-(\d+)$/);
+  if (hashMatch) {
+    const n = parseInt(hashMatch[1], 10);
+    if (n >= 0 && n < MATCH.players.length) initialIdx = n;
+  }
+  selectPlayer(initialIdx);
+
+  // реакция на изменение hash (если пользователь меняет вручную)
+  window.addEventListener('hashchange', () => {
+    const m = location.hash.match(/^#player-(\d+)$/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n >= 0 && n < MATCH.players.length) selectPlayer(n);
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>TI 2026 — Team Vision vs Team Spirit</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e14; --bg2:#0f141c; --card:#141a24; --card2:#1a2230;
+    --border:rgba(255,255,255,.07);
+    --text:#e8ecf1; --muted:#8892a0;
+    --radiant:#2ecc71; --dire:#e63946;
+    --gold:#f4a261; --blue:#4ea8de; --purple:#9d4edd;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);
+    padding:24px;min-height:100vh;
+    background-image:
+      radial-gradient(circle at 15% 0%,rgba(46,204,113,.08),transparent 40%),
+      radial-gradient(circle at 85% 100%,rgba(230,57,70,.08),transparent 40%);
+  }
+  .dashboard{max-width:1700px;margin:0 auto;display:grid;
+    grid-template-columns:repeat(12,1fr);gap:16px}
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));
+    border:1px solid var(--border);border-radius:16px;padding:20px;
+    backdrop-filter:blur(12px);transition:.25s;position:relative;overflow:hidden}
+  .card:hover{border-color:rgba(244,162,97,.35);
+    box-shadow:0 12px 40px rgba(0,0,0,.5)}
+  .card-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;
+    text-transform:uppercase;letter-spacing:1.8px;color:var(--muted);
+    margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  .card-title::before{content:'';width:4px;height:14px;background:var(--gold);
+    border-radius:2px;box-shadow:0 0 10px var(--gold)}
+
+  /* HEADER */
+  .header{grid-column:span 12;display:flex;align-items:center;gap:24px;
+    padding:24px 28px;background:linear-gradient(135deg,var(--card),var(--bg2));
+    border:1px solid var(--border);border-radius:18px;position:relative;
+    overflow:hidden}
+  .header::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--radiant),var(--gold),var(--dire))}
+  .team{display:flex;align-items:center;gap:16px;flex:1;position:relative;z-index:1}
+  .team.dire{flex-direction:row-reverse;text-align:right}
+  .team-logo{width:80px;height:80px;border-radius:16px;flex-shrink:0;
+    background:#0a0e14;border:2px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px;
+    font-family:'Rajdhani';font-size:22px;font-weight:700;color:var(--gold)}
+  .team-logo img{width:100%;height:100%;object-fit:contain}
+  .team-logo.radiant{border-color:rgba(46,204,113,.5);
+    box-shadow:0 0 30px rgba(46,204,113,.35)}
+  .team-logo.dire{border-color:rgba(230,57,70,.5);
+    box-shadow:0 0 30px rgba(230,57,70,.35)}
+  .team-name{font-family:'Rajdhani';font-size:24px;font-weight:700;letter-spacing:.5px}
+  .team-tag{font-size:11px;color:var(--muted);letter-spacing:2.5px;margin-top:3px;
+    text-transform:uppercase}
+  .score{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .score-num{display:flex;align-items:center;gap:16px;font-family:'JetBrains Mono';
+    font-size:48px;font-weight:700}
+  .score-r{color:var(--radiant);text-shadow:0 0 24px rgba(46,204,113,.6)}
+  .score-d{color:var(--dire);text-shadow:0 0 24px rgba(230,57,70,.6)}
+  .score-sep{color:var(--muted);font-size:32px}
+  .winner{font-family:'Rajdhani';font-size:12px;font-weight:700;color:var(--gold);
+    letter-spacing:2px;text-transform:uppercase}
+
+  /* TIMELINE */
+  .timeline{grid-column:span 8}
+  .chart-shell{position:relative;height:340px}
+  svg.chart{width:100%;height:100%;display:block;cursor:crosshair}
+  .dt-tip{position:absolute;pointer-events:none;z-index:10;
+    background:rgba(10,14,20,.97);border:1px solid rgba(244,162,97,.4);
+    border-radius:12px;padding:12px 14px;font-size:12px;
+    box-shadow:0 12px 40px rgba(0,0,0,.8);
+    opacity:0;transition:opacity .12s;min-width:300px;
+    backdrop-filter:blur(10px)}
+  .dt-tip.on{opacity:1}
+  .dt-time{font-family:'JetBrains Mono';font-size:14px;font-weight:700;
+    color:var(--gold);margin-bottom:8px;letter-spacing:1px;
+    display:flex;justify-content:space-between;align-items:center}
+  .dt-adv{font-size:12px;font-weight:700}
+  .dt-adv.pos{color:var(--radiant)} .dt-adv.neg{color:var(--dire)}
+  .dt-team{display:flex;align-items:center;gap:8px;padding:6px 0;
+    border-bottom:1px solid rgba(255,255,255,.06)}
+  .dt-team:last-of-type{border:none}
+  .dt-team-lbl{font-family:'Rajdhani';font-weight:700;font-size:12px;
+    letter-spacing:1.5px;min-width:60px}
+  .dt-team.radiant .dt-team-lbl{color:var(--radiant)}
+  .dt-team.dire .dt-team-lbl{color:var(--dire)}
+  .dt-heroes{display:flex;gap:3px}
+  .dt-hero{width:26px;height:26px;border-radius:5px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.15);background:#1a2230;
+    display:flex;align-items:center;justify-content:center;
+    font-size:9px;color:var(--gold);font-family:'Rajdhani';font-weight:700}
+  .dt-hero img{width:100%;height:100%;object-fit:cover;display:block}
+  .dt-row{display:flex;justify-content:space-between;font-size:11px;
+    padding:3px 0;color:var(--muted)}
+  .dt-row b{font-family:'JetBrains Mono';color:var(--text)}
+
+  /* LEAGUE */
+  .league{grid-column:span 4}
+  .lg-title{font-family:'Rajdhani';font-size:20px;font-weight:700;
+    color:var(--gold);margin-bottom:4px;letter-spacing:1px}
+  .lg-sub{font-size:11px;color:var(--muted);letter-spacing:2px;
+    text-transform:uppercase;margin-bottom:14px}
+  .lg-row{display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+  .lg-row:last-child{border:none}
+  .lg-row .lbl{color:var(--muted);display:flex;align-items:center;gap:8px}
+  .lg-ico{width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+    background:#1a2230;border-radius:6px;padding:3px;flex-shrink:0;
+    font-size:14px;overflow:hidden}
+  .lg-ico img{width:100%;height:100%;object-fit:contain}
+  .lg-row .val{font-family:'JetBrains Mono';font-weight:700}
+
+  /* DRAFT */
+  .draft{grid-column:span 6}
+  .draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .draft-col h4{font-family:'Rajdhani';font-size:13px;text-transform:uppercase;
+    letter-spacing:2px;margin-bottom:12px;padding-bottom:8px;
+    border-bottom:1px solid rgba(255,255,255,.08)}
+  .draft-col.radiant h4{color:var(--radiant)}
+  .draft-col.dire h4{color:var(--dire);text-align:right}
+  .hero-card{display:flex;align-items:center;gap:10px;padding:6px;margin-bottom:6px;
+    border-radius:10px;transition:.2s}
+  .hero-card.pick{background:rgba(46,204,113,.08);border-left:3px solid var(--radiant)}
+  .dire .hero-card.pick{background:rgba(230,57,70,.08);
+    border-left:none;border-right:3px solid var(--dire);flex-direction:row-reverse}
+  .hero-card.ban{background:rgba(255,255,255,.03);opacity:.5;
+    border-left:3px solid var(--muted);filter:grayscale(.7)}
+  .dire .hero-card.ban{border-left:none;border-right:3px solid var(--muted);
+    flex-direction:row-reverse;text-align:right}
+  .hero-avatar{width:46px;height:46px;border-radius:8px;overflow:hidden;
+    background:#1a2230;flex-shrink:0;border:1px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Rajdhani';font-size:11px;font-weight:700;color:var(--gold);text-align:center}
+  .hero-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .hero-info{flex:1;min-width:0}
+  .hero-info .name{font-size:13px;font-weight:600;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .hero-info .role{font-size:10px;color:var(--muted);letter-spacing:1px;
+    text-transform:uppercase;margin-top:2px}
+
+  /* OBJECTIVES */
+  .objectives{grid-column:span 6}
+  .obj-row{display:flex;align-items:center;gap:12px;padding:10px 8px;
+    border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;
+    border-radius:8px;transition:.2s}
+  .obj-row:hover{background:rgba(255,255,255,.03)}
+  .obj-row:last-child{border:none}
+  .obj-time{font-family:'JetBrains Mono';font-size:12px;color:var(--muted);
+    min-width:56px;font-weight:700}
+  .obj-avatar{width:34px;height:34px;border-radius:8px;overflow:hidden;
+    background:#1a2230;border:1px solid rgba(255,255,255,.1);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:16px}
+  .obj-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .obj-avatar.item img{object-fit:contain;padding:4px}
+  .obj-icon{font-size:16px;width:24px;text-align:center;flex-shrink:0;color:var(--gold)}
+  .obj-text{flex:1;line-height:1.35}
+  .obj-text b{color:var(--gold)}
+  .obj-team{font-size:10px;padding:3px 9px;border-radius:5px;
+    text-transform:uppercase;letter-spacing:1px;font-weight:700;flex-shrink:0}
+  .obj-team.radiant{background:rgba(46,204,113,.15);color:var(--radiant);
+    border:1px solid rgba(46,204,113,.3)}
+  .obj-team.dire{background:rgba(230,57,70,.15);color:var(--dire);
+    border:1px solid rgba(230,57,70,.3)}
+
+  /* TEAMFIGHTS */
+  .teamfights{grid-column:span 12}
+  .tf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:10px}
+  .tf-card{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);
+    border-radius:10px;padding:12px;transition:.2s}
+  .tf-card:hover{background:rgba(255,255,255,.05);
+    border-color:rgba(244,162,97,.3);transform:translateY(-2px)}
+  .tf-card .head{display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:8px}
+  .tf-card .time{font-family:'JetBrains Mono';font-size:12px;color:var(--muted);
+    font-weight:700}
+  .tf-badge{font-size:10px;padding:2px 8px;border-radius:4px;
+    text-transform:uppercase;letter-spacing:1px;font-weight:700}
+  .tf-badge.win{background:rgba(46,204,113,.15);color:var(--radiant)}
+  .tf-badge.loss{background:rgba(230,57,70,.15);color:var(--dire)}
+  .tf-card .stat{font-size:11px;color:var(--muted);display:flex;
+    justify-content:space-between;padding:3px 0}
+  .tf-card .stat b{color:var(--text);font-family:'JetBrains Mono'}
+
+  /* PLAYERS */
+  .players{grid-column:span 12}
+  .players-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  .player-card{background:linear-gradient(180deg,var(--card2),var(--card));
+    border:1px solid rgba(255,255,255,.06);border-radius:14px;
+    padding:14px;position:relative;overflow:hidden;transition:.25s;cursor:pointer}
+  .player-card:hover{transform:translateY(-4px);
+    border-color:rgba(244,162,97,.4);
+    box-shadow:0 12px 30px rgba(0,0,0,.5)}
+  .player-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .player-card.radiant::before{background:linear-gradient(90deg,var(--radiant),transparent)}
+  .player-card.dire::before{background:linear-gradient(90deg,transparent,var(--dire))}
+  .pos-badge{position:absolute;top:10px;right:10px;font-family:'JetBrains Mono';
+    font-size:9px;background:rgba(244,162,97,.15);color:var(--gold);
+    padding:3px 7px;border-radius:5px;font-weight:700;
+    border:1px solid rgba(244,162,97,.3)}
+  .p-hero{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .p-hero-avatar{width:52px;height:52px;border-radius:10px;overflow:hidden;
+    background:#1a2230;flex-shrink:0;border:2px solid rgba(255,255,255,.1);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Rajdhani';font-size:12px;font-weight:700;color:var(--gold)}
+  .player-card.radiant .p-hero-avatar{border-color:rgba(46,204,113,.4)}
+  .player-card.dire .p-hero-avatar{border-color:rgba(230,57,70,.4)}
+  .p-hero-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .p-hero-info{min-width:0;flex:1}
+  .p-name{font-family:'Rajdhani';font-size:15px;font-weight:700;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .p-hero-name{font-size:10px;color:var(--muted);letter-spacing:1px;
+    text-transform:uppercase;margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .p-kda{font-family:'JetBrains Mono';font-size:17px;font-weight:700;
+    text-align:center;padding:8px 0;margin-bottom:10px;
+    background:rgba(255,255,255,.03);border-radius:8px;
+    border:1px solid rgba(255,255,255,.05)}
+  .kda-k{color:var(--radiant)} .kda-d{color:var(--dire)} .kda-a{color:var(--blue)}
+  .kda-sep{color:var(--muted);margin:0 2px;font-size:14px}
+  .p-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .p-stat{display:flex;flex-direction:column;gap:2px}
+  .p-stat .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:1px}
+  .p-stat .val{font-family:'JetBrains Mono';font-size:13px;font-weight:700}
+  .val.gold{color:var(--gold)} .val.blue{color:var(--blue)}
+  .val.green{color:var(--radiant)} .val.purple{color:var(--purple)}
+  .p-bar{height:4px;background:rgba(255,255,255,.06);border-radius:2px;
+    overflow:hidden;margin-top:6px}
+  .p-bar-fill{height:100%;border-radius:2px;transition:.4s}
+  .radiant .p-bar-fill{background:linear-gradient(90deg,var(--radiant),var(--gold))}
+  .dire .p-bar-fill{background:linear-gradient(90deg,var(--gold),var(--dire))}
+
+  @media(max-width:1400px){.players-grid{grid-template-columns:repeat(4,1fr)}}
+  @media(max-width:1200px){
+    .timeline,.league,.draft,.objectives{grid-column:span 12}
+    .players-grid{grid-template-columns:repeat(2,1fr)}
+    .header{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="team radiant">
+      <div class="team-logo radiant" id="logoVsn">VSN</div>
+      <div>
+        <div class="team-name">TEAM VISION</div>
+        <div class="team-tag">Radiant · 31 kills</div>
+      </div>
+    </div>
+    <div class="score">
+      <div class="score-num">
+        <span class="score-r">31</span><span class="score-sep">:</span><span class="score-d">34</span>
+      </div>
+      <div class="winner">🏆 Team Spirit wins · 64:22</div>
+    </div>
+    <div class="team dire">
+      <div class="team-logo dire" id="logoTs">TS</div>
+      <div>
+        <div class="team-name">TEAM SPIRIT</div>
+        <div class="team-tag">Dire · 34 kills</div>
+      </div>
+    </div>
+  </div>
+<div style="grid-column:span 12;display:flex;gap:10px;justify-content:center;
+  padding:8px 0">
+  <a href="index.html" style="text-decoration:none">
+    <button style="font-family:'Rajdhani';font-size:14px;font-weight:700;
+      text-transform:uppercase;letter-spacing:1.5px;padding:10px 24px;
+      border-radius:10px;border:1px solid #f4a261;cursor:pointer;
+      background:linear-gradient(135deg,rgba(244,162,97,.2),rgba(244,162,97,.05));
+      color:#f4a261;box-shadow:0 0 20px rgba(244,162,97,.2)">
+      📊 Обзор
+    </button>
+  </a>
+  <a href="players-detail.html" style="text-decoration:none">
+    <button style="font-family:'Rajdhani';font-size:14px;font-weight:700;
+      text-transform:uppercase;letter-spacing:1.5px;padding:10px 24px;
+      border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer;
+      background:#141a24;color:#8892a0">
+      🔍 Детали игроков
+    </button>
+  </a>
+  
+</div>
+  <!-- TIMELINE -->
+  <div class="card timeline">
+    <div class="card-title">Преимущество по ходу матча</div>
+    <div class="chart-shell">
+      <svg class="chart" viewBox="0 0 900 340" preserveAspectRatio="none" id="advChart"></svg>
+      <div class="dt-tip" id="tip"></div>
+    </div>
+  </div>
+
+  <!-- LEAGUE -->
+  <div class="card league">
+    <div class="lg-title">THE INTERNATIONAL 2026</div>
+    <div class="lg-sub">Grand Final · BO3 · Game 2</div>
+    <div class="lg-row">
+      <span class="lbl"><span class="lg-ico">🛡️</span> Aegis</span>
+      <span class="val" style="color:var(--dire)">TSpirit · 3</span>
+    </div>
+    <div class="lg-row">
+      <span class="lbl"><span class="lg-ico">🗼</span> Towers</span>
+      <span class="val">6 : 6</span>
+    </div>
+    <div class="lg-row">
+      <span class="lbl"><span class="lg-ico">🏰</span> Barracks</span>
+      <span class="val">0 : 3</span>
+    </div>
+    <div class="lg-row">
+      <span class="lbl"><span class="lg-ico">🩸</span> First Blood</span>
+      <span class="val">01:19</span>
+    </div>
+    <div class="lg-row">
+      <span class="lbl"><span class="lg-ico">⏱️</span> Длительность</span>
+      <span class="val">64:22</span>
+    </div>
+    <div class="lg-row">
+      <span class="lbl"><span class="lg-ico">🥇</span> Tier</span>
+      <span class="val" style="color:var(--gold)">PREMIUM</span>
+    </div>
+    <div class="lg-row">
+      <span class="lbl"><span class="lg-ico">🎮</span> Match ID</span>
+      <span class="val">8960991322</span>
+    </div>
+  </div>
+
+  <!-- DRAFT -->
+  <div class="card draft">
+    <div class="card-title">Драфт</div>
+    <div class="draft-grid">
+      <div class="draft-col radiant">
+        <h4>Radiant</h4>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="juggernaut" data-fallback="JUG">JUG</div><div class="hero-info"><div class="name">Juggernaut</div><div class="role">Carry · Rin</div></div></div>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="axe" data-fallback="AXE">AXE</div><div class="hero-info"><div class="name">Axe</div><div class="role">Offlane · Noticed</div></div></div>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="invoker" data-fallback="INV">INV</div><div class="hero-info"><div class="name">Invoker</div><div class="role">Mid · No[o]ne-</div></div></div>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="rubick" data-fallback="RUB">RUB</div><div class="hero-info"><div class="name">Rubick</div><div class="role">Support · 9Class</div></div></div>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="hoodwink" data-fallback="HOOD">HOOD</div><div class="hero-info"><div class="name">Hoodwink</div><div class="role">Support · Dukalis</div></div></div>
+        <div class="hero-card ban"><div class="hero-avatar" data-hero="batrider" data-fallback="BAT">BAT</div><div class="hero-info"><div class="name">Batrider</div><div class="role">Ban</div></div></div>
+        <div class="hero-card ban"><div class="hero-avatar" data-hero="furion" data-fallback="NP">NP</div><div class="hero-info"><div class="name">Nature's Prophet</div><div class="role">Ban</div></div></div>
+        <div class="hero-card ban"><div class="hero-avatar" data-hero="treant" data-fallback="TRE">TRE</div><div class="hero-info"><div class="name">Treant</div><div class="role">Ban</div></div></div>
+      </div>
+      <div class="draft-col dire">
+        <h4>Dire</h4>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="life_stealer" data-fallback="LS">LS</div><div class="hero-info"><div class="name">Lifestealer</div><div class="role">Carry · Yatoro</div></div></div>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="pangolier" data-fallback="PANG">PANG</div><div class="hero-info"><div class="name">Pangolier</div><div class="role">Mid · Larl</div></div></div>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="dark_seer" data-fallback="DS">DS</div><div class="hero-info"><div class="name">Dark Seer</div><div class="role">Offlane · Collapse</div></div></div>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="mirana" data-fallback="MIRA">MIRA</div><div class="hero-info"><div class="name">Mirana</div><div class="role">Support · not_me</div></div></div>
+        <div class="hero-card pick"><div class="hero-avatar" data-hero="bane" data-fallback="BANE">BANE</div><div class="hero-info"><div class="name">Bane</div><div class="role">Support · rue</div></div></div>
+        <div class="hero-card ban"><div class="hero-avatar" data-hero="rattletrap" data-fallback="CW">CW</div><div class="hero-info"><div class="name">Clockwerk</div><div class="role">Ban</div></div></div>
+        <div class="hero-card ban"><div class="hero-avatar" data-hero="wisp" data-fallback="IO">IO</div><div class="hero-info"><div class="name">Io</div><div class="role">Ban</div></div></div>
+        <div class="hero-card ban"><div class="hero-avatar" data-hero="shadow_demon" data-fallback="SD">SD</div><div class="hero-info"><div class="name">Shadow Demon</div><div class="role">Ban</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJECTIVES -->
+  <div class="card objectives">
+    <div class="card-title">Ключевые цели</div>
+    <div class="obj-row">
+      <span class="obj-time">00:79</span>
+      <div class="obj-avatar" data-hero="hoodwink" data-fallback="🩸">🩸</div>
+      <span class="obj-icon"></span>
+      <span class="obj-text">First Blood — <b>Hoodwink</b> убил Mirana</span>
+      <span class="obj-team radiant">VSN</span>
+    </div>
+    <div class="obj-row">
+      <span class="obj-time">12:52</span>
+      <div class="obj-avatar" data-hero="invoker" data-fallback="🗼">🗼</div>
+      <span class="obj-icon"></span>
+      <span class="obj-text">T1 Mid уничтожена</span>
+      <span class="obj-team radiant">VSN</span>
+    </div>
+    <div class="obj-row">
+      <span class="obj-time">16:46</span>
+      <div class="obj-avatar" data-hero="life_stealer" data-fallback="🗼">🗼</div>
+      <span class="obj-icon"></span>
+      <span class="obj-text">T1 Mid уничтожена</span>
+      <span class="obj-team dire">TS</span>
+    </div>
+    <div class="obj-row">
+      <span class="obj-time">29:55</span>
+      <div class="obj-avatar item" data-hero="aegis" data-fallback="🛡️">🛡️</div>
+      <span class="obj-icon"></span>
+      <span class="obj-text">Roshan #1 → Aegis у <b>Lifestealer</b></span>
+      <span class="obj-team dire">TS</span>
+    </div>
+    <div class="obj-row">
+      <span class="obj-time">40:52</span>
+      <div class="obj-avatar item" data-hero="aegis" data-fallback="🛡️">🛡️</div>
+      <span class="obj-icon"></span>
+      <span class="obj-text">Roshan #2 → Aegis у <b>Lifestealer</b></span>
+      <span class="obj-team dire">TS</span>
+    </div>
+    <div class="obj-row">
+      <span class="obj-time">50:38</span>
+      <div class="obj-avatar item" data-hero="aegis" data-fallback="🛡️">🛡️</div>
+      <span class="obj-icon"></span>
+      <span class="obj-text">Roshan #3 → Aegis у <b>Juggernaut</b></span>
+      <span class="obj-team radiant">VSN</span>
+    </div>
+    <div class="obj-row">
+      <span class="obj-time">58:26</span>
+      <div class="obj-avatar" data-hero="life_stealer" data-fallback="🏰">🏰</div>
+      <span class="obj-icon"></span>
+      <span class="obj-text">Range Rax Mid уничтожен</span>
+      <span class="obj-team dire">TS</span>
+    </div>
+    <div class="obj-row">
+      <span class="obj-time">64:22</span>
+      <div class="obj-avatar" data-hero="pangolier" data-fallback="💀">💀</div>
+      <span class="obj-icon"></span>
+      <span class="obj-text">Ancient Fallen — <b>GG</b></span>
+      <span class="obj-team dire">TS</span>
+    </div>
+  </div>
+
+  <!-- TEAMFIGHTS -->
+  <div class="card teamfights">
+    <div class="card-title">Командные бои (7)</div>
+    <div class="tf-grid">
+      <div class="tf-card"><div class="head"><span class="time">12:52</span><span class="tf-badge win">Radiant win</span></div><div class="stat"><span>Смертей</span><b>5</b></div><div class="stat"><span>Убийств Dire</span><b>2</b></div><div class="stat"><span>Убийств Radiant</span><b>3</b></div></div>
+      <div class="tf-card"><div class="head"><span class="time">38:02</span><span class="tf-badge loss">Dire win</span></div><div class="stat"><span>Смертей</span><b>3</b></div><div class="stat"><span>Убийств Dire</span><b>3</b></div><div class="stat"><span>Убийств Radiant</span><b>0</b></div></div>
+      <div class="tf-card"><div class="head"><span class="time">52:59</span><span class="tf-badge loss">Dire win</span></div><div class="stat"><span>Смертей</span><b>3</b></div><div class="stat"><span>Убийств Dire</span><b>3</b></div><div class="stat"><span>Убийств Radiant</span><b>0</b></div></div>
+      <div class="tf-card"><div class="head"><span class="time">53:24</span><span class="tf-badge loss">Dire win</span></div><div class="stat"><span>Смертей</span><b>3</b></div><div class="stat"><span>Убийств Dire</span><b>2</b></div><div class="stat"><span>Убийств Radiant</span><b>1</b></div></div>
+      <div class="tf-card"><div class="head"><span class="time">57:04</span><span class="tf-badge loss">Dire win</span></div><div class="stat"><span>Смертей</span><b>3</b></div><div class="stat"><span>Убийств Dire</span><b>2</b></div><div class="stat"><span>Убийств Radiant</span><b>1</b></div></div>
+      <div class="tf-card"><div class="head"><span class="time">62:44</span><span class="tf-badge loss">Dire win</span></div><div class="stat"><span>Смертей</span><b>4</b></div><div class="stat"><span>Убийств Dire</span><b>3</b></div><div class="stat"><span>Убийств Radiant</span><b>1</b></div></div>
+      <div class="tf-card"><div class="head"><span class="time">63:38</span><span class="tf-badge loss">Dire win</span></div><div class="stat"><span>Смертей</span><b>6</b></div><div class="stat"><span>Убийств Dire</span><b>4</b></div><div class="stat"><span>Убийств Radiant</span><b>2</b></div></div>
+    </div>
+  </div>
+
+  <!-- PLAYERS -->
+  <div class="card players">
+    <div class="card-title">Игроки матча</div>
+    <div class="players-grid" id="playersGrid"></div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   УНИВЕРСАЛЬНАЯ ЗАГРУЗКА ИЗОБРАЖЕНИЙ С 5 ФОЛБЭКАМИ
+   ============================================================ */
+function buildHeroSources(hero){
+  return [
+    `https://www.dotabuff.com/assets/heroes/${hero}.jpg`,
+    `https://cdn.stratz.com/images/dota2/heroes/${hero}_lg.png`,
+    `https://steamcdn-a.akamaihd.net/apps/dota2/images/heroes/${hero}_full.png`,
+    `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${hero}.png`,
+    `https://api.opendota.com/apps/dota2/images/heroes/${hero}_full.png`
+  ];
+}
+
+// Иконки предметов (Aegis) и прочего
+function buildItemSources(item){
+  return [
+    `https://raw.githubusercontent.com/HighGroundVision/Hyperstone/master/images/items/${item}.png`,
+    `https://cdn.stratz.com/images/dota2/items/${item}.png`,
+    `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${item}.png`
+  ];
+}
+
+// Загрузка с цепочкой фолбэков
+function loadImageWithFallback(container, sources, fallbackText){
+  // Если в контейнере уже есть текст и нет img — создаём img
+  let img = container.querySelector('img');
+  if (!img) {
+    // Сохраняем текст как fallback
+    if (!fallbackText) fallbackText = container.textContent.trim() || '?';
+    container.textContent = '';
+    img = document.createElement('img');
+    container.appendChild(img);
+  }
+  let idx = 0;
+  img.onerror = function(){
+    idx++;
+    if (idx < sources.length) {
+      img.src = sources[idx];
+    } else {
+      // Все фолбэки исчерпаны
+      container.innerHTML = '';
+      container.textContent = fallbackText;
+    }
+  };
+  img.onload = function(){
+    // Успешно загружено — оставляем img
+  };
+  img.src = sources[0];
+}
+
+// Инициализация всех элементов с data-hero
+function initAllHeroImages(){
+  document.querySelectorAll('[data-hero]').forEach(el => {
+    const hero = el.dataset.hero;
+    const fallback = el.dataset.fallback || '?';
+    let sources;
+    if (hero === 'aegis') {
+      sources = buildItemSources('aegis');
+    } else {
+      sources = buildHeroSources(hero);
+    }
+    loadImageWithFallback(el, sources, fallback);
+  });
+}
+
+// Логотипы команд
+function initTeamLogos(){
+  const vsn = document.getElementById('logoVsn');
+  const ts = document.getElementById('logoTs');
+
+  // Vision — из JSON CDN
+  loadImageWithFallback(vsn, [
+    'https://cdn.steamusercontent.com/ugc/10380389074903512947/5D074799695A862D17D4205285315FE20399B28D/',
+    'https://cdn.stratz.com/images/dota2/teams/9572001_logo.png',
+    'https://liquipedia.net/commons/images/thumb/2/2e/Team_Vision_allmode.png/200px-Team_Vision_allmode.png'
+  ], 'VSN');
+
+  // Spirit — из Google + CDN
+  loadImageWithFallback(ts, [
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZXxjQ7sxr2hXUGkMBbuXNvcPEbKEG3LR3nTwioj76zQ&s=10',
+    'https://cdn.steamusercontent.com/ugc/1839179120711951766/CD7E0885CB527334205CC7885E9C101B7BC17702/',
+    'https://cdn.stratz.com/images/dota2/teams/7119388_logo.png',
+    'https://liquipedia.net/commons/images/thumb/e/e1/Team_Spirit_allmode.png/200px-Team_Spirit_allmode.png'
+  ], 'TS');
+}
+
+/* ============================================================
+   ДАННЫЕ
+   ============================================================ */
+const TIMES = [0,60,120,180,240,300,360,420,480,540,600,660,720,780,840,900,960,1020,1080,1140,1200,1260,1320,1380,1440,1500,1560,1620,1680,1740,1800,1860,1920,1980,2040,2100,2160,2220,2280,2340,2400,2460,2520,2580,2640,2700,2760,2820,2880,2940,3000,3060,3120,3180,3240,3300,3360,3420,3480,3540,3600,3660,3720,3780,3840];
+const GOLD_ADV = [0,-15,610,1017,1092,1064,780,816,736,-76,987,828,2222,3038,1995,3102,3290,1972,2280,2249,2912,2594,3102,3354,3283,2932,2645,2828,3051,934,213,366,671,620,202,952,3577,4794,4325,-958,-2969,-3477,-4430,-4287,-5507,-6974,-7142,-7179,-6385,-5636,-3375,-2627,-2910,-2006,-423,-2923,-2702,-1433,-3372,-7152,-10437,-10171,-10980,-10194,-17557];
+const XP_ADV = [0,-66,115,579,610,973,618,997,821,-79,1242,1371,3592,3834,2922,3416,2720,2085,3116,3911,4531,4387,5254,4592,4514,3908,3664,3881,4494,-4427,-5716,-6357,-6286,-5810,-3475,-1153,-1530,1769,1182,-14546,-16241,-17089,-16654,-21300,-21651,-27789,-30542,-31474,-31403,-27526,-23669,-23609,-24035,-23281,-23343,-28200,-26586,-25805,-26230,-27357,-31089,-31177,-32595,-28511,-46769];
+
+const RAD_HEROES = ['juggernaut','axe','invoker','rubick','hoodwink'];
+const DIR_HEROES = ['life_stealer','pangolier','dark_seer','mirana','bane'];
+
+/* ============================================================
+   ГРАФИК
+   ============================================================ */
+(function drawChart(){
+  const svg = document.getElementById('advChart');
+  const tip = document.getElementById('tip');
+  const shell = svg.parentElement;
+  const NS = 'http://www.w3.org/2000/svg';
+
+  const W = 900, H = 340, PL = 55, PR = 20, PT = 25, PB = 30;
+  const IW = W - PL - PR, IH = H - PT - PB;
+  const midY = PT + IH / 2;
+
+  const maxAbs = Math.max(...GOLD_ADV.map(Math.abs), ...XP_ADV.map(Math.abs));
+  const yMax = Math.ceil(maxAbs / 5000) * 5000;
+
+  const xS = i => PL + (i / (TIMES.length - 1)) * IW;
+  const yS = v => midY - (v / yMax) * (IH / 2);
+
+  const el = (tag, attrs) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  };
+
+  const defs = el('defs');
+  defs.innerHTML = `
+    <linearGradient id="goldLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2ecc71"/>
+      <stop offset="50%" stop-color="#f4a261"/>
+      <stop offset="100%" stop-color="#e63946"/>
+    </linearGradient>
+    <linearGradient id="goldFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4a261" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#f4a261" stop-opacity="0"/>
+    </linearGradient>
+  `;
+  svg.appendChild(defs);
+
+  svg.appendChild(el('rect', {x:PL, y:PT, width:IW, height:IH/2, fill:'rgba(46,204,113,0.09)'}));
+  svg.appendChild(el('rect', {x:PL, y:midY, width:IW, height:IH/2, fill:'rgba(230,57,70,0.09)'}));
+
+  const yGrid = [-yMax, -yMax/2, 0, yMax/2, yMax];
+  yGrid.forEach(v => {
+    const y = yS(v);
+    svg.appendChild(el('line', {
+      x1:PL, x2:W-PR, y1:y, y2:y,
+      stroke: v===0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.06)',
+      'stroke-dasharray': v===0 ? '4 4' : '2 6',
+      'stroke-width': v===0 ? 1.5 : 1
+    }));
+    if (v !== 0) {
+      const t = el('text', {
+        x:PL-8, y:y+3, fill:'#8892a0', 'font-size':'10',
+        'font-family':'JetBrains Mono, monospace', 'text-anchor':'end'
+      });
+      t.textContent = (v>0?'+':'') + (v/1000) + 'k';
+      svg.appendChild(t);
+    }
+  });
+
+  TIMES.forEach((t, i) => {
+    if (i % 5 === 0) {
+      const x = xS(i);
+      svg.appendChild(el('line', {x1:x, x2:x, y1:midY-4, y2:midY+4, stroke:'rgba(255,255,255,0.2)'}));
+      const txt = el('text', {
+        x:x, y:H-10, fill:'#8892a0', 'font-size':'10',
+        'font-family':'JetBrains Mono, monospace', 'text-anchor':'middle'
+      });
+      txt.textContent = Math.floor(t/60) + ':00';
+      svg.appendChild(txt);
+    }
+  });
+
+  const goldPts = GOLD_ADV.map((v,i) => [xS(i), yS(v)]);
+  let areaPath = `M ${goldPts[0][0]} ${midY}`;
+  goldPts.forEach(p => areaPath += ` L ${p[0]} ${p[1]}`);
+  areaPath += ` L ${goldPts[goldPts.length-1][0]} ${midY} Z`;
+  svg.appendChild(el('path', {d:areaPath, fill:'url(#goldFill)'}));
+
+  const goldPath = 'M ' + goldPts.map(p => p.join(' ')).join(' L ');
+  const goldLine = el('path', {
+    d: goldPath, fill: 'none', stroke: 'url(#goldLine)',
+    'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+  });
+  goldLine.style.filter = 'drop-shadow(0 0 6px rgba(244,162,97,0.5))';
+  svg.appendChild(goldLine);
+
+  const xpPts = XP_ADV.map((v,i) => [xS(i), yS(v)]);
+  const xpPath = 'M ' + xpPts.map(p => p.join(' ')).join(' L ');
+  const xpLine = el('path', {
+    d: xpPath, fill: 'none', stroke: '#4ea8de',
+    'stroke-width': 2, 'stroke-dasharray': '5 4'
+  });
+  xpLine.style.filter = 'drop-shadow(0 0 6px rgba(78,168,222,0.5))';
+  svg.appendChild(xpLine);
+
+  goldPts.forEach((p, i) => {
+    if (i % 5 === 0 || i === goldPts.length - 1) {
+      svg.appendChild(el('circle', {
+        cx:p[0], cy:p[1], r:3.5, fill:'#0a0e14',
+        stroke:'#f4a261', 'stroke-width':2
+      }));
+    }
+  });
+
+  const hoverLine = el('line', {
+    x1:0, x2:0, y1:PT, y2:PT+IH,
+    stroke:'rgba(255,255,255,0.5)', 'stroke-width':1, opacity:0
+  });
+  svg.appendChild(hoverLine);
+
+  const dotG = el('circle', {r:6, fill:'#f4a261', stroke:'#0a0e14', 'stroke-width':2, opacity:0});
+  const dotX = el('circle', {r:6, fill:'#4ea8de', stroke:'#0a0e14', 'stroke-width':2, opacity:0});
+  svg.appendChild(dotG);
+  svg.appendChild(dotX);
+
+  const overlay = el('rect', {x:PL, y:PT, width:IW, height:IH, fill:'transparent'});
+  overlay.style.cursor = 'crosshair';
+  svg.appendChild(overlay);
+
+  const legend = el('g');
+  const lx = PL + 10, ly = PT + 15;
+  [
+    {color:'#f4a261', text:'Gold Advantage', dash:'0'},
+    {color:'#4ea8de', text:'XP Advantage', dash:'5 3'}
+  ].forEach((it, i) => {
+    const y = ly + i * 18;
+    legend.appendChild(el('line', {
+      x1:lx, x2:lx+22, y1:y, y2:y,
+      stroke:it.color, 'stroke-width':2.5, 'stroke-dasharray':it.dash
+    }));
+    const t = el('text', {
+      x:lx+28, y:y+4, fill:'#8892a0', 'font-size':'11', 'font-family':'Inter, sans-serif'
+    });
+    t.textContent = it.text;
+    legend.appendChild(t);
+  });
+  svg.appendChild(legend);
+
+  const fmtTime = s => Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+  const fmtNum = v => (v>0?'+':'') + v.toLocaleString('ru-RU');
+
+  // В тултипе тоже используем фолбэк — просто текст при неудаче
+  const heroImg = (n, label) => `
+    <div class="dt-hero" data-dt-hero="${n}">
+      <img src="https://www.dotabuff.com/assets/heroes/${n}.jpg"
+           onerror="window.__chainHero(this, '${n}', '${label}')">
+    </div>`;
+
+  window.__chainHero = function(img, hero, label){
+    const srcs = buildHeroSources(hero);
+    let i = parseInt(img.dataset.i || '0');
+    i++;
+    if (i < srcs.length) {
+      img.dataset.i = i;
+      img.src = srcs[i];
+    } else {
+      img.parentNode.textContent = label;
+    }
+  };
+
+  function showTip(idx, clientX, clientY) {
+    const rect = svg.getBoundingClientRect();
+    const relX = clientX - rect.left;
+    const relY = clientY - rect.top;
+    const x = xS(idx);
+
+    hoverLine.setAttribute('x1', x); hoverLine.setAttribute('x2', x);
+    hoverLine.setAttribute('opacity', 1);
+    dotG.setAttribute('cx', x); dotG.setAttribute('cy', yS(GOLD_ADV[idx]));
+    dotG.setAttribute('opacity', 1);
+    dotX.setAttribute('cx', x); dotX.setAttribute('cy', yS(XP_ADV[idx]));
+    dotX.setAttribute('opacity', 1);
+
+    const gAdv = GOLD_ADV[idx];
+    const xAdv = XP_ADV[idx];
+
+    tip.innerHTML = `
+      <div class="dt-time">
+        <span>⏱ ${fmtTime(TIMES[idx])}</span>
+        <span class="dt-adv ${gAdv>=0?'pos':'neg'}">${fmtNum(gAdv)}</span>
+      </div>
+      <div class="dt-team radiant">
+        <span class="dt-team-lbl">RADIANT</span>
+        <div class="dt-heroes">${RAD_HEROES.map(n => heroImg(n, n.slice(0,4).toUpperCase())).join('')}</div>
+      </div>
+      <div class="dt-team dire">
+        <span class="dt-team-lbl">DIRE</span>
+        <div class="dt-heroes">${DIR_HEROES.map(n => heroImg(n, n.slice(0,4).toUpperCase())).join('')}</div>
+      </div>
+      <div class="dt-row"><span>Gold Advantage</span>
+        <b style="color:${gAdv>=0?'#2ecc71':'#e63946'}">${fmtNum(gAdv)}</b></div>
+      <div class="dt-row"><span>XP Advantage</span>
+        <b style="color:${xAdv>=0?'#2ecc71':'#e63946'}">${fmtNum(xAdv)}</b></div>
+    `;
+
+    tip.classList.add('on');
+    const shellRect = shell.getBoundingClientRect();
+    const tipRect = tip.getBoundingClientRect();
+    let left = relX + 20;
+    let top = relY + 20;
+    if (left + tipRect.width > shellRect.width) left = relX - tipRect.width - 20;
+    if (top + tipRect.height > shellRect.height) top = relY - tipRect.height - 20;
+    if (top < 0) top = 5;
+    if (left < 0) left = 5;
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+
+  function hideTip() {
+    hoverLine.setAttribute('opacity', 0);
+    dotG.setAttribute('opacity', 0);
+    dotX.setAttribute('opacity', 0);
+    tip.classList.remove('on');
+  }
+
+  overlay.addEventListener('mousemove', e => {
+    const rect = svg.getBoundingClientRect();
+    const relX = e.clientX - rect.left;
+    const vbX = (relX / rect.width) * W;
+    const ratio = (vbX - PL) / IW;
+    let idx = Math.round(ratio * (TIMES.length - 1));
+    idx = Math.max(0, Math.min(TIMES.length - 1, idx));
+    showTip(idx, e.clientX, e.clientY);
+  });
+
+  overlay.addEventListener('mouseleave', hideTip);
+})();
+
+/* ============================================================
+   ИГРОКИ
+   ============================================================ */
+(function renderPlayers(){
+  const players = [
+    {slot:0,   name:'Rin',       hero:'juggernaut',   heroName:'Juggernaut',    team:'radiant', pos:1, k:8,  d:5,  a:8,  gpm:769, xpm:870, nw:40422, hd:46111},
+    {slot:1,   name:'Noticed',   hero:'axe',          heroName:'Axe',           team:'radiant', pos:3, k:11, d:5,  a:10, gpm:600, xpm:673, nw:30109, hd:21179},
+    {slot:2,   name:'No[o]ne-',  hero:'invoker',      heroName:'Invoker',       team:'radiant', pos:2, k:1,  d:5,  a:22, gpm:702, xpm:695, nw:37505, hd:39792},
+    {slot:3,   name:'9Class',    hero:'rubick',       heroName:'Rubick',        team:'radiant', pos:4, k:2,  d:11, a:23, gpm:285, xpm:517, nw:12671, hd:20841},
+    {slot:4,   name:'Dukalis',   hero:'hoodwink',     heroName:'Hoodwink',      team:'radiant', pos:5, k:8,  d:8,  a:14, gpm:337, xpm:489, nw:11171, hd:21828},
+    {slot:128, name:'rue',       hero:'bane',         heroName:'Bane',          team:'dire',    pos:5, k:2,  d:8,  a:20, gpm:302, xpm:565, nw:16418, hd:13767},
+    {slot:129, name:'Yatoro',    hero:'life_stealer', heroName:'Lifestealer',   team:'dire',    pos:1, k:7,  d:4,  a:13, gpm:825, xpm:1010,nw:45071, hd:34525},
+    {slot:130, name:'Larl',      hero:'pangolier',    heroName:'Pangolier',     team:'dire',    pos:2, k:12, d:4,  a:19, gpm:684, xpm:968, nw:38797, hd:31929},
+    {slot:131, name:'not_me',    hero:'mirana',       heroName:'Mirana',        team:'dire',    pos:4, k:2,  d:10, a:25, gpm:389, xpm:588, nw:18157, hd:22131},
+    {slot:132, name:'Collapse',  hero:'dark_seer',    heroName:'Dark Seer',     team:'dire',    pos:3, k:11, d:5,  a:17, gpm:812, xpm:988, nw:40601, hd:35322}
+  ];
+
+  const grid = document.getElementById('playersGrid');
+  const maxGPM = Math.max(...players.map(p => p.gpm));
+
+  grid.innerHTML = players.map(p => {
+    const teamClass = p.team;
+    const barPct = Math.round((p.gpm / maxGPM) * 100);
+    const heroUpper = p.heroName.slice(0,4).toUpperCase();
+    return `
+      <div class="player-card ${teamClass}">
+        <div class="pos-badge">POS ${p.pos}</div>
+        <div class="p-hero">
+          <div class="p-hero-avatar" data-hero="${p.hero}" data-fallback="${heroUpper}">${heroUpper}</div>
+          <div class="p-hero-info">
+            <div class="p-name">${p.name}</div>
+            <div class="p-hero-name">${p.heroName}</div>
+          </div>
+        </div>
+        <div class="p-kda">
+          <span class="kda-k">${p.k}</span><span class="kda-sep">/</span>
+          <span class="kda-d">${p.d}</span><span class="kda-sep">/</span>
+          <span class="kda-a">${p.a}</span>
+        </div>
+        <div class="p-stats">
+          <div class="p-stat"><span class="lbl">GPM</span><span class="val gold">${p.gpm}</span></div>
+          <div class="p-stat"><span class="lbl">XPM</span><span class="val blue">${p.xpm}</span></div>
+          <div class="p-stat"><span class="lbl">Net Worth</span><span class="val purple">${(p.nw/1000).toFixed(1)}k</span></div>
+          <div class="p-stat"><span class="lbl">Hero DMG</span><span class="val green">${(p.hd/1000).toFixed(1)}k</span></div>
+        </div>
+        <div class="p-bar"><div class="p-bar-fill" style="width:${barPct}%"></div></div>
+      </div>
+    `;
+  }).join('');
+
+  // После рендера игроков — инициализируем все картинки с фолбэками
+  initAllHeroImages();
+})();
+
+// Инициализация логотипов команд
+initTeamLogos();
+</script>
+
+</body>
+</html>
